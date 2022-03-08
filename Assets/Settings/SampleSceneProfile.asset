@@ -1,5 +1,37 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8356285635140720333
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5cc98e2b24ac524da4997e7a1ff4616, type: 3}
+  m_Name: PixelizeSector
+  m_EditorClassIdentifier: 
+  active: 0
+  m_AdvancedMode: 0
+  pixelSize:
+    m_OverrideState: 1
+    m_Value: 0.67
+  circleRadius:
+    m_OverrideState: 0
+    m_Value: 0.8
+  pixelIntervalX:
+    m_OverrideState: 0
+    m_Value: 1
+  pixelIntervalY:
+    m_OverrideState: 0
+    m_Value: 1
+  BackgroundColor:
+    m_OverrideState: 0
+    m_Value: {r: 0, g: 0, b: 0, a: 1}
+    hdr: 1
+    showAlpha: 1
+    showEyeDropper: 1
 --- !u!114 &-7893295128165547882
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -72,6 +104,35 @@ MonoBehaviour:
   gridWidth:
     m_OverrideState: 0
     m_Value: 1
+--- !u!114 &-7418771860841537717
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa92a7d3ec485ea47a51652b0b12f874, type: 3}
+  m_Name: EdgeDetectionScharrNeon
+  m_EditorClassIdentifier: 
+  active: 0
+  m_AdvancedMode: 0
+  EdgeWidth:
+    m_OverrideState: 1
+    m_Value: 1.7
+  BackgroundFade:
+    m_OverrideState: 1
+    m_Value: 0.33
+  Brigtness:
+    m_OverrideState: 0
+    m_Value: 1
+  BackgroundColor:
+    m_OverrideState: 0
+    m_Value: {r: 0, g: 0, b: 0, a: 1}
+    hdr: 1
+    showAlpha: 1
+    showEyeDropper: 1
 --- !u!114 &-7011558710299706105
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -108,6 +169,58 @@ MonoBehaviour:
   rounded:
     m_OverrideState: 0
     m_Value: 0
+--- !u!114 &-5724805935998415109
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e61fba9bd69d53e4faad81811ba803af, type: 3}
+  m_Name: DualGaussianBlur
+  m_EditorClassIdentifier: 
+  active: 1
+  m_AdvancedMode: 0
+  BlurRadius:
+    m_OverrideState: 1
+    m_Value: 3.6
+  Iteration:
+    m_OverrideState: 0
+    m_Value: 4
+  RTDownScaling:
+    m_OverrideState: 0
+    m_Value: 1
+--- !u!114 &-4911977944649944429
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1d260afb8296b24aaa9def7e6a9753c, type: 3}
+  m_Name: PixelizeHexagon
+  m_EditorClassIdentifier: 
+  active: 0
+  m_AdvancedMode: 0
+  pixelSize:
+    m_OverrideState: 1
+    m_Value: 0.03
+  useAutoScreenRatio:
+    m_OverrideState: 0
+    m_Value: 0
+  pixelRatio:
+    m_OverrideState: 0
+    m_Value: 1
+  pixelScaleX:
+    m_OverrideState: 0
+    m_Value: 1
+  pixelScaleY:
+    m_OverrideState: 0
+    m_Value: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -125,6 +238,12 @@ MonoBehaviour:
   - {fileID: -7893295128165547882}
   - {fileID: -7011558710299706105}
   - {fileID: -7815808772793512115}
+  - {fileID: 2109658263537612904}
+  - {fileID: -4911977944649944429}
+  - {fileID: -8356285635140720333}
+  - {fileID: 9023798159867514117}
+  - {fileID: -7418771860841537717}
+  - {fileID: -5724805935998415109}
 --- !u!114 &849379129802519247
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -142,3 +261,73 @@ MonoBehaviour:
   mode:
     m_OverrideState: 1
     m_Value: 2
+--- !u!114 &2109658263537612904
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e100b561bd764004c8594f76b6e7685c, type: 3}
+  m_Name: GlitchImageBlock
+  m_EditorClassIdentifier: 
+  active: 0
+  m_AdvancedMode: 0
+  Fade:
+    m_OverrideState: 1
+    m_Value: 1
+    min: 0
+    max: 1
+  Speed:
+    m_OverrideState: 0
+    m_Value: 0.5
+    min: 0
+    max: 1
+  Amount:
+    m_OverrideState: 0
+    m_Value: 1
+  BlockLayer1_U:
+    m_OverrideState: 0
+    m_Value: 9
+  BlockLayer1_V:
+    m_OverrideState: 0
+    m_Value: 9
+  BlockLayer2_U:
+    m_OverrideState: 0
+    m_Value: 5
+  BlockLayer2_V:
+    m_OverrideState: 0
+    m_Value: 5
+  BlockLayer1_Indensity:
+    m_OverrideState: 0
+    m_Value: 8
+  BlockLayer2_Indensity:
+    m_OverrideState: 0
+    m_Value: 4
+  RGBSplitIndensity:
+    m_OverrideState: 0
+    m_Value: 0.5
+  BlockVisualizeDebug:
+    m_OverrideState: 0
+    m_Value: 0
+--- !u!114 &9023798159867514117
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48e2bc581c54cb64394b31a8e553f842, type: 3}
+  m_Name: ScreenBinarization
+  m_EditorClassIdentifier: 
+  active: 0
+  m_AdvancedMode: 0
+  intensity:
+    m_OverrideState: 1
+    m_Value: 1
+    min: 0
+    max: 1

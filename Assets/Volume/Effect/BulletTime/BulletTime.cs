@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 
 namespace XPostProcessing
 {
-    [VolumeComponentMenu(VolumeDefine.VOLUMEROOT + "子弹时间 (Bullet Time)")]
+    [VolumeComponentMenu(VolumeDefine.Extra + "子弹时间 (Bullet Time)")]
     public class BulletTime : VolumeSetting
     {
         public override bool IsActive() => bulletTimeEnable.value;

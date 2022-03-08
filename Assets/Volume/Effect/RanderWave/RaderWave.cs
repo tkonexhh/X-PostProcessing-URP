@@ -8,7 +8,7 @@ using UnityEngine.Rendering;
 
 namespace XPostProcessing
 {
-    [VolumeComponentMenu(VolumeDefine.VOLUMEROOT + "探测波 RaderWave")]
+    [VolumeComponentMenu(VolumeDefine.Extra + "探测波 RaderWave")]
     public class RaderWave : VolumeSetting
     {
         public override bool IsActive() => raderWaveStrenght.value > 0;
