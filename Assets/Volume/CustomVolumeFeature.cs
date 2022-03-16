@@ -27,6 +27,8 @@ namespace XPostProcessing
                 var source = new RenderTargetHandle(renderer.cameraColorTarget);
                 var destination = new RenderTargetHandle(renderer.cameraColorTarget);
 
+                m_CustomVolumePass.renderPassEvent = settings.RenderPassEvent;
+                m_CustomVolumePass.downSample = settings.downSample;
                 m_CustomVolumePass.Setup(renderer.cameraColorTarget);
                 renderer.EnqueuePass(m_CustomVolumePass);
             }
@@ -37,8 +39,7 @@ namespace XPostProcessing
             if (m_CustomVolumePass == null)
             {
                 m_CustomVolumePass = new CustomVolumePass();
-                m_CustomVolumePass.renderPassEvent = settings.RenderPassEvent;
-                m_CustomVolumePass.downSample = settings.downSample;
+
             }
 
         }
