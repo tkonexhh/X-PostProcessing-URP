@@ -16,7 +16,7 @@ namespace XPostProcessing
         public const string ImageProcessing = VOLUMEROOT + "图像处理 (Image Processing)/";
         public const string Environment = VOLUMEROOT + "环境后效 (Environment)/";
         public const string Vignette = VOLUMEROOT + "渐晕 (Vignette)/";
-
+        public const string CutScene = VOLUMEROOT + "转场 (CutScene)/";
         public const string Extra = VOLUMEROOT + "其他 (Extra)/";
     }
 

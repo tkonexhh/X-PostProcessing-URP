@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Active: 1
   settings:
-    RenderPassEvent: 1000
+    RenderPassEvent: 550
     downSample: 0
 --- !u!114 &11400000
 MonoBehaviour:
