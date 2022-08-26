@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
-
+using UnityEngine.Rendering.Universal;
 namespace XPostProcessing
 {
     [VolumeComponentMenu(VolumeDefine.Blur + "散景模糊 (Bokeh Blur)")]
@@ -16,16 +16,15 @@ namespace XPostProcessing
 
     public class BokehBlurRenderer : VolumeRenderer<BokehBlur>
     {
-        private const string PROFILER_TAG = "BokehBlur";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "BokehBlur";
+        public override string ShaderName => "Hidden/PostProcessing/Blur/BokehBlur";
+
 
         private Vector4 mGoldenRot = new Vector4();
 
         public override void Init()
         {
-            shader = Shader.Find("Hidden/PostProcessing/Blur/BokehBlur");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
+            base.Init();
 
             // Precompute rotations
             float c = Mathf.Cos(2.39996323f);
@@ -41,12 +40,8 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
-
-            cmd.BeginSample(PROFILER_TAG);
 
             int RTWidth = (int)(Screen.width / settings.RTDownScaling.value);
             int RTHeight = (int)(Screen.height / settings.RTDownScaling.value);
@@ -55,14 +50,13 @@ namespace XPostProcessing
             // downsample screen copy into smaller RT
             cmd.Blit(source, ShaderIDs.BufferRT1);
 
-            m_BlitMaterial.SetVector(ShaderIDs.GoldenRot, mGoldenRot);
-            m_BlitMaterial.SetVector(ShaderIDs.Params, new Vector4(settings.Iteration.value, settings.BlurRadius.value, 1f / Screen.width, 1f / Screen.height));
-            cmd.Blit(ShaderIDs.BufferRT1, target, m_BlitMaterial);
+            blitMaterial.SetVector(ShaderIDs.GoldenRot, mGoldenRot);
+            blitMaterial.SetVector(ShaderIDs.Params, new Vector4(settings.Iteration.value, settings.BlurRadius.value, 1f / Screen.width, 1f / Screen.height));
+            cmd.Blit(ShaderIDs.BufferRT1, target, blitMaterial);
 
             // release
             cmd.ReleaseTemporaryRT(ShaderIDs.BufferRT1);
 
-            cmd.EndSample(PROFILER_TAG);
         }
     }
 

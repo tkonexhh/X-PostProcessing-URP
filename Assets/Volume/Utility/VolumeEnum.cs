@@ -35,6 +35,9 @@ namespace XPostProcessing
     [System.Serializable]
     public sealed class IntervalTypeParameter : VolumeParameter<IntervalType> { public IntervalTypeParameter(IntervalType value, bool overrideState = false) : base(value, overrideState) { } }
 
+    [System.Serializable]
+    public sealed class TransformParameter : VolumeParameter<Transform> { public TransformParameter(Transform value, bool overrideState = false) : base(value, overrideState) { } }
+
 
     public enum VignetteType
     {
@@ -44,5 +47,7 @@ namespace XPostProcessing
 
     [System.Serializable]
     public sealed class VignetteTypeParameter : VolumeParameter<VignetteType> { public VignetteTypeParameter(VignetteType value, bool overrideState = false) : base(value, overrideState) { } }
+    [System.Serializable]
+    public sealed class StringParameter : VolumeParameter<string> { public StringParameter(string value, bool overrideState = true) : base(value, overrideState) { } }
 
 }

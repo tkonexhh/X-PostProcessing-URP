@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace XPostProcessing
 {
@@ -17,16 +18,9 @@ namespace XPostProcessing
 
     public class GaussianBlurRenderer : VolumeRenderer<GaussianBlur>
     {
-        private const string PROFILER_TAG = "GaussianBlur";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "GaussianBlur";
+        public override string ShaderName => "Hidden/PostProcessing/Blur/GaussianBlur";
 
-
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/Blur/GaussianBlur");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderIDs
         {
@@ -36,12 +30,9 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
 
-            cmd.BeginSample(PROFILER_TAG);
 
             int RTWidth = (int)(Screen.width / settings.RTDownScaling.value);
             int RTHeight = (int)(Screen.height / settings.RTDownScaling.value);
@@ -55,22 +46,22 @@ namespace XPostProcessing
             for (int i = 0; i < settings.Iteration.value; i++)
             {
                 // horizontal blur
-                m_BlitMaterial.SetVector(ShaderIDs.BlurRadius, new Vector4(settings.BlurRadius.value / Screen.width, 0, 0, 0));
-                cmd.Blit(ShaderIDs.BufferRT1, ShaderIDs.BufferRT2, m_BlitMaterial);
+                blitMaterial.SetVector(ShaderIDs.BlurRadius, new Vector4(settings.BlurRadius.value / Screen.width, 0, 0, 0));
+                cmd.Blit(ShaderIDs.BufferRT1, ShaderIDs.BufferRT2, blitMaterial);
 
                 // vertical blur
-                m_BlitMaterial.SetVector(ShaderIDs.BlurRadius, new Vector4(0, settings.BlurRadius.value / Screen.height, 0, 0));
-                cmd.Blit(ShaderIDs.BufferRT2, ShaderIDs.BufferRT1, m_BlitMaterial);
+                blitMaterial.SetVector(ShaderIDs.BlurRadius, new Vector4(0, settings.BlurRadius.value / Screen.height, 0, 0));
+                cmd.Blit(ShaderIDs.BufferRT2, ShaderIDs.BufferRT1, blitMaterial);
             }
 
             // Render blurred texture in blend pass
-            cmd.Blit(ShaderIDs.BufferRT1, target, m_BlitMaterial);
+            cmd.Blit(ShaderIDs.BufferRT1, target, blitMaterial);
 
             // release
             cmd.ReleaseTemporaryRT(ShaderIDs.BufferRT1);
             cmd.ReleaseTemporaryRT(ShaderIDs.BufferRT2);
 
-            cmd.EndSample(PROFILER_TAG);
+
         }
     }
 

@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-
 namespace XPostProcessing
 {
     [VolumeComponentMenu(VolumeDefine.Glitch + "数字条纹故障 (Digital Stripe Glitch)")]
@@ -28,19 +27,14 @@ namespace XPostProcessing
 
     public class GlitchDigitalStripeRenderer : VolumeRenderer<GlitchDigitalStripe>
     {
-        private const string PROFILER_TAG = "GlitchDigitalStripe";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "GlitchDigitalStripe";
+        public override string ShaderName => "Hidden/PostProcessing/Glitch/DigitalStripe";
+
 
         Texture2D _noiseTexture;
         RenderTexture _trashFrame1;
         RenderTexture _trashFrame2;
 
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/Glitch/DigitalStripe");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderIDs
         {
@@ -88,37 +82,29 @@ namespace XPostProcessing
             var bytes = _noiseTexture.EncodeToPNG();
         }
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-
-            if (m_BlitMaterial == null)
-                return;
-
-            cmd.BeginSample(PROFILER_TAG);
-
             UpdateNoiseTexture(settings.frequncy.value, settings.noiseTextureWidth.value, settings.noiseTextureHeight.value, settings.stripeLength.value);
 
-            m_BlitMaterial.SetFloat(ShaderIDs.indensity, settings.intensity.value);
+            blitMaterial.SetFloat(ShaderIDs.indensity, settings.intensity.value);
 
             if (_noiseTexture != null)
             {
-                m_BlitMaterial.SetTexture(ShaderIDs.noiseTex, _noiseTexture);
+                blitMaterial.SetTexture(ShaderIDs.noiseTex, _noiseTexture);
             }
 
             if (settings.needStripColorAdjust == true)
             {
-                m_BlitMaterial.EnableKeyword("NEED_TRASH_FRAME");
-                m_BlitMaterial.SetColor(ShaderIDs.StripColorAdjustColor, settings.StripColorAdjustColor.value);
-                m_BlitMaterial.SetFloat(ShaderIDs.StripColorAdjustIndensity, settings.StripColorAdjustIndensity.value);
+                blitMaterial.EnableKeyword("NEED_TRASH_FRAME");
+                blitMaterial.SetColor(ShaderIDs.StripColorAdjustColor, settings.StripColorAdjustColor.value);
+                blitMaterial.SetFloat(ShaderIDs.StripColorAdjustIndensity, settings.StripColorAdjustIndensity.value);
             }
             else
             {
-                m_BlitMaterial.DisableKeyword("NEED_TRASH_FRAME");
+                blitMaterial.DisableKeyword("NEED_TRASH_FRAME");
             }
 
-            cmd.Blit(source, target, m_BlitMaterial);
-
-            cmd.EndSample(PROFILER_TAG);
+            cmd.Blit(source, target, blitMaterial);
         }
     }
 

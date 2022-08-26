@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace XPostProcessing
 {
@@ -16,17 +17,18 @@ namespace XPostProcessing
 
     public class DualGaussianBlurRenderer : VolumeRenderer<DualGaussianBlur>
     {
-        private const string PROFILER_TAG = "DualGaussianBlur";
-        private Shader shader;
-        private Material m_BlitMaterial;
+
+        public override string PROFILER_TAG => "DualGaussianBlur";
+        public override string ShaderName => "Hidden/PostProcessing/Blur/DualGaussianBlur";
+
+
 
         Level[] m_Pyramid;
         const int k_MaxPyramidSize = 16;
 
         public override void Init()
         {
-            shader = Shader.Find("Hidden/PostProcessing/Blur/DualGaussianBlur");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
+            base.Init();
 
             m_Pyramid = new Level[k_MaxPyramidSize];
 
@@ -59,18 +61,15 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
 
-            cmd.BeginSample(PROFILER_TAG);
 
             int tw = (int)(Screen.width / settings.RTDownScaling.value);
             int th = (int)(Screen.height / settings.RTDownScaling.value);
 
             Vector4 BlurOffset = new Vector4(settings.BlurRadius.value / (float)Screen.width, settings.BlurRadius.value / (float)Screen.height, 0, 0);
-            m_BlitMaterial.SetVector(ShaderIDs.BlurOffset, BlurOffset);
+            blitMaterial.SetVector(ShaderIDs.BlurOffset, BlurOffset);
             // Downsample
             RenderTargetIdentifier lastDown = source;
             for (int i = 0; i < settings.Iteration.value; i++)
@@ -87,12 +86,12 @@ namespace XPostProcessing
 
 
                 // horizontal blur
-                m_BlitMaterial.SetVector(ShaderIDs.BlurOffset, new Vector4(settings.BlurRadius.value / Screen.width, 0, 0, 0));
-                cmd.Blit(lastDown, mipDowH, m_BlitMaterial, 0);
+                blitMaterial.SetVector(ShaderIDs.BlurOffset, new Vector4(settings.BlurRadius.value / Screen.width, 0, 0, 0));
+                cmd.Blit(lastDown, mipDowH, blitMaterial, 0);
 
                 // vertical blur
-                m_BlitMaterial.SetVector(ShaderIDs.BlurOffset, new Vector4(0, settings.BlurRadius.value / Screen.height, 0, 0));
-                cmd.Blit(mipDowH, mipDownV, m_BlitMaterial, 0);
+                blitMaterial.SetVector(ShaderIDs.BlurOffset, new Vector4(0, settings.BlurRadius.value / Screen.height, 0, 0));
+                cmd.Blit(mipDowH, mipDownV, blitMaterial, 0);
 
                 lastDown = mipDownV;
                 tw = Mathf.Max(tw / 2, 1);
@@ -108,19 +107,19 @@ namespace XPostProcessing
                 int mipUpH = m_Pyramid[i].up_horizontal;
 
                 // horizontal blur
-                m_BlitMaterial.SetVector(ShaderIDs.BlurOffset, new Vector4(settings.BlurRadius.value / Screen.width, 0, 0, 0));
-                cmd.Blit(lastUp, mipUpH, m_BlitMaterial, 0);
+                blitMaterial.SetVector(ShaderIDs.BlurOffset, new Vector4(settings.BlurRadius.value / Screen.width, 0, 0, 0));
+                cmd.Blit(lastUp, mipUpH, blitMaterial, 0);
 
                 // vertical blur
-                m_BlitMaterial.SetVector(ShaderIDs.BlurOffset, new Vector4(0, settings.BlurRadius.value / Screen.height, 0, 0));
-                cmd.Blit(mipUpH, mipUpV, m_BlitMaterial, 0);
+                blitMaterial.SetVector(ShaderIDs.BlurOffset, new Vector4(0, settings.BlurRadius.value / Screen.height, 0, 0));
+                cmd.Blit(mipUpH, mipUpV, blitMaterial, 0);
 
                 lastUp = mipUpV;
             }
 
 
             // Render blurred texture in blend pass
-            cmd.Blit(lastUp, target, m_BlitMaterial, 1);
+            cmd.Blit(lastUp, target, blitMaterial, 1);
 
             // Cleanup
             for (int i = 0; i < settings.Iteration.value; i++)
@@ -135,7 +134,7 @@ namespace XPostProcessing
                     cmd.ReleaseTemporaryRT(m_Pyramid[i].up_vertical);
             }
 
-            cmd.EndSample(PROFILER_TAG);
+
         }
     }
 

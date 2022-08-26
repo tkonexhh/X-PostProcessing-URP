@@ -3,7 +3,7 @@
 // using UnityEngine;
 // using UnityEngine.Rendering;
 
-// namespace XPostProcessing
+// namespace HMK
 // {
 //     [VolumeComponentMenu(VolumeDefine.ColorAdjustment + "ColorReplace")]
 //     public class ColorAdjustmentColorReplaceV2 : VolumeSetting
@@ -28,7 +28,7 @@
 
 //         public override void Init()
 //         {
-//             shader = Shader.Find("Hidden/PostProcessing/ColorAdjustment/ColorReplaceV2");
+//             shader = ShaderFinder.Find("Hidden/PostProcessing/ColorAdjustment/ColorReplaceV2");
 //             m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
 //         }
 

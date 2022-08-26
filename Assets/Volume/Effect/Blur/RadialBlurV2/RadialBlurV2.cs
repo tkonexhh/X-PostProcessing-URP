@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
-
+using UnityEngine.Rendering.Universal;
 namespace XPostProcessing
 {
 
@@ -35,18 +35,10 @@ namespace XPostProcessing
 
     public class RadialBlurV2Renderer : VolumeRenderer<RadialBlurV2>
     {
-        private const string PROFILER_TAG = "RadialBlurV2";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "RadialBlurV2";
+        public override string ShaderName => "Hidden/PostProcessing/Blur/RadialBlurV2";
 
 
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/Blur/RadialBlurV2");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-
-
-        }
 
         static class ShaderIDs
         {
@@ -54,18 +46,15 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
 
-            cmd.BeginSample(PROFILER_TAG);
 
-            m_BlitMaterial.SetVector(ShaderIDs.Params, new Vector3(settings.BlurRadius.value * 0.02f, settings.RadialCenterX.value, settings.RadialCenterY.value));
+            blitMaterial.SetVector(ShaderIDs.Params, new Vector3(settings.BlurRadius.value * 0.02f, settings.RadialCenterX.value, settings.RadialCenterY.value));
 
-            cmd.Blit(source, target, m_BlitMaterial, (int)settings.QualityLevel.value);
+            cmd.Blit(source, target, blitMaterial, (int)settings.QualityLevel.value);
 
-            cmd.EndSample(PROFILER_TAG);
+
         }
     }
 

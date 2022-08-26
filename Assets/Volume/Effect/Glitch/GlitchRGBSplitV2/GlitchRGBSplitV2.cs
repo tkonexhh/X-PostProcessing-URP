@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-
 namespace XPostProcessing
 {
     [VolumeComponentMenu(VolumeDefine.Glitch + "RGB颜色分离V2 (RGB SplitV2)")]
@@ -21,18 +20,13 @@ namespace XPostProcessing
 
     public sealed class GlitchRGBSplitV2Renderer : VolumeRenderer<GlitchRGBSplitV2>
     {
-        private const string PROFILER_TAG = "GlitchRGBSplitV2";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "GlitchRGBSplitV2";
+        public override string ShaderName => "Hidden/PostProcessing/Glitch/RGBSplitV2";
+
 
         private float TimeX = 1.0f;
 
 
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/Glitch/RGBSplitV2");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderIDs
         {
@@ -40,23 +34,16 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
-
-            cmd.BeginSample(PROFILER_TAG);
-
             TimeX += Time.deltaTime;
             if (TimeX > 100)
             {
                 TimeX = 0;
             }
 
-            m_BlitMaterial.SetVector(ShaderIDs.Params, new Vector3(TimeX * settings.Speed.value, settings.Amount.value, settings.Amplitude.value));
-            cmd.Blit(source, target, m_BlitMaterial);
-
-            cmd.EndSample(PROFILER_TAG);
+            blitMaterial.SetVector(ShaderIDs.Params, new Vector3(TimeX * settings.Speed.value, settings.Amount.value, settings.Amplitude.value));
+            cmd.Blit(source, target, blitMaterial);
         }
     }
 

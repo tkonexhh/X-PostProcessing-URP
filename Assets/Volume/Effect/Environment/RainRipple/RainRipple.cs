@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace XPostProcessing
 {
@@ -44,16 +45,9 @@ namespace XPostProcessing
 
     public class RainRippleRenderer : VolumeRenderer<RainRippel>
     {
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "Rain Ripple";
+        public override string ShaderName => "Hidden/PostProcessing/RainRipple";
 
-        private const string PROFILER_TAG = "Rain Ripple";
-
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/RainRipple");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderContants
         {
@@ -72,35 +66,25 @@ namespace XPostProcessing
             public static readonly int rainEnableDistanceID = Shader.PropertyToID("_RainEnableDistance");
         }
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
-
-
-
-            cmd.BeginSample(PROFILER_TAG);
-
             Vector2 texelS;
             texelS.x = 1f / Screen.width;
             texelS.y = 1f / Screen.height;
-            m_BlitMaterial.SetTexture(ShaderContants.rainRippleMaskTextureID, settings.rippleMaskTexture.value);
-            m_BlitMaterial.SetTexture(ShaderContants.rainFlowMapID, settings.flowMap.value);
-            m_BlitMaterial.SetTexture(ShaderContants.rainFlowNormalID, settings.flowNormalMap.value);
-            m_BlitMaterial.SetFloat(ShaderContants.rainRippleStrengthID, settings.rippleStrength.value);
-            m_BlitMaterial.SetVector(ShaderContants.texelSizeID, texelS);
-            m_BlitMaterial.SetFloat(ShaderContants.rainRippleDiffusionFrequencyID, settings.rippleFrequency.value);
-            m_BlitMaterial.SetFloat(ShaderContants.rainRippleSizeID, settings.rippleSize.value);
-            m_BlitMaterial.SetFloat(ShaderContants.rainIntensityID, settings.rainIntensity.value);
-            m_BlitMaterial.SetFloat(ShaderContants.rainRippleBiasID, settings.rippleBias.value);
-            m_BlitMaterial.SetFloat(ShaderContants.rainFlowStrengthID, settings.flowStrength.value);
-            m_BlitMaterial.SetFloat(ShaderContants.rainFlowSpeedID, settings.flowSpeed.value);
-            m_BlitMaterial.SetFloat(ShaderContants.rainEnableDistanceID, settings.rainEnableDistance.value);
+            blitMaterial.SetTexture(ShaderContants.rainRippleMaskTextureID, settings.rippleMaskTexture.value);
+            blitMaterial.SetTexture(ShaderContants.rainFlowMapID, settings.flowMap.value);
+            blitMaterial.SetTexture(ShaderContants.rainFlowNormalID, settings.flowNormalMap.value);
+            blitMaterial.SetFloat(ShaderContants.rainRippleStrengthID, settings.rippleStrength.value);
+            blitMaterial.SetVector(ShaderContants.texelSizeID, texelS);
+            blitMaterial.SetFloat(ShaderContants.rainRippleDiffusionFrequencyID, settings.rippleFrequency.value);
+            blitMaterial.SetFloat(ShaderContants.rainRippleSizeID, settings.rippleSize.value);
+            blitMaterial.SetFloat(ShaderContants.rainIntensityID, settings.rainIntensity.value);
+            blitMaterial.SetFloat(ShaderContants.rainRippleBiasID, settings.rippleBias.value);
+            blitMaterial.SetFloat(ShaderContants.rainFlowStrengthID, settings.flowStrength.value);
+            blitMaterial.SetFloat(ShaderContants.rainFlowSpeedID, settings.flowSpeed.value);
+            blitMaterial.SetFloat(ShaderContants.rainEnableDistanceID, settings.rainEnableDistance.value);
 
-            cmd.Blit(source, target, m_BlitMaterial);
-            // cmd.Blit(target, source);
-
-            cmd.EndSample(PROFILER_TAG);
+            cmd.Blit(source, target, blitMaterial);
         }
     }
 

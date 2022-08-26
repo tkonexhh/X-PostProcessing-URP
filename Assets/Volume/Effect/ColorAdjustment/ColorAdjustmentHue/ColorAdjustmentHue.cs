@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
-
+using UnityEngine.Rendering.Universal;
 namespace XPostProcessing
 {
     [VolumeComponentMenu(VolumeDefine.ColorAdjustment + "色相偏移 (Hue)")]
@@ -15,15 +15,9 @@ namespace XPostProcessing
 
     public class ColorAdjustmentHueRenderer : VolumeRenderer<ColorAdjustmentHue>
     {
-        private const string PROFILER_TAG = "ColorAdjustmentHue";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "ColorAdjustmentHue";
+        public override string ShaderName => "Hidden/PostProcessing/ColorAdjustment/Hue";
 
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/ColorAdjustment/Hue");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderIDs
         {
@@ -31,17 +25,11 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
+            blitMaterial.SetFloat(ShaderIDs.HueDegree, settings.HueDegree.value);
 
-            cmd.BeginSample(PROFILER_TAG);
-
-            m_BlitMaterial.SetFloat(ShaderIDs.HueDegree, settings.HueDegree.value);
-
-            cmd.Blit(source, target, m_BlitMaterial);
-            cmd.EndSample(PROFILER_TAG);
+            cmd.Blit(source, target, blitMaterial);
         }
     }
 

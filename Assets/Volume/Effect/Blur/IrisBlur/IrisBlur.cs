@@ -36,16 +36,9 @@ namespace XPostProcessing
 
     public sealed class IrisBlurRenderer : VolumeRenderer<IrisBlur>
     {
-        private const string PROFILER_TAG = "IrisBlur";
-        private Shader shader;
-        private Material m_BlitMaterial;
 
-
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/Blur/IrisBlur");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
+        public override string PROFILER_TAG => "IrisBlur";
+        public override string ShaderName => "Hidden/PostProcessing/Blur/IrisBlur";
 
         static class ShaderIDs
         {
@@ -56,12 +49,9 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
 
-            cmd.BeginSample(PROFILER_TAG);
 
             if (settings.Iteration == 1)
             {
@@ -72,7 +62,7 @@ namespace XPostProcessing
                 HandleMultipleIterationBlur(cmd, source, target, settings.Iteration.value);
             }
 
-            cmd.EndSample(PROFILER_TAG);
+
         }
 
         void HandleOneBlitBlur(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
@@ -83,13 +73,13 @@ namespace XPostProcessing
             cmd.GetTemporaryRT(ShaderIDs.BufferRT1, RTWidth, RTHeight, 0, FilterMode.Bilinear);
 
             // Set Property
-            m_BlitMaterial.SetVector(ShaderIDs.Params, new Vector4(settings.AreaSize.value, settings.BlurRadius.value));
+            blitMaterial.SetVector(ShaderIDs.Params, new Vector4(settings.AreaSize.value, settings.BlurRadius.value));
 
-            cmd.Blit(source, ShaderIDs.BufferRT1, m_BlitMaterial, (int)settings.QualityLevel.value);
+            cmd.Blit(source, ShaderIDs.BufferRT1, blitMaterial, (int)settings.QualityLevel.value);
 
             // Final Blit
             cmd.SetGlobalTexture(ShaderIDs.BlurredTex, ShaderIDs.BufferRT1);
-            cmd.Blit(source, target, m_BlitMaterial, 2);
+            cmd.Blit(source, target, blitMaterial, 2);
 
             // Release
             cmd.ReleaseTemporaryRT(ShaderIDs.BufferRT1);
@@ -107,7 +97,7 @@ namespace XPostProcessing
             cmd.GetTemporaryRT(ShaderIDs.BufferRT2, RTWidth, RTHeight, 0, FilterMode.Bilinear);
 
             // Set Property
-            m_BlitMaterial.SetVector(ShaderIDs.Params, new Vector2(settings.AreaSize.value, settings.BlurRadius.value));
+            blitMaterial.SetVector(ShaderIDs.Params, new Vector2(settings.AreaSize.value, settings.BlurRadius.value));
 
             RenderTargetIdentifier finalBlurID = ShaderIDs.BufferRT1;
             RenderTargetIdentifier firstID = source;
@@ -115,7 +105,7 @@ namespace XPostProcessing
             for (int i = 0; i < Iteration; i++)
             {
                 // Do Blit
-                cmd.Blit(firstID, secondID, m_BlitMaterial, (int)settings.QualityLevel.value);
+                cmd.Blit(firstID, secondID, blitMaterial, (int)settings.QualityLevel.value);
 
                 finalBlurID = secondID;
                 firstID = secondID;
@@ -124,7 +114,7 @@ namespace XPostProcessing
 
             // Final Blit
             cmd.SetGlobalTexture(ShaderIDs.BlurredTex, finalBlurID);
-            cmd.Blit(source, target, m_BlitMaterial, 2);
+            cmd.Blit(source, target, blitMaterial, 2);
 
             // Release
             cmd.ReleaseTemporaryRT(ShaderIDs.BufferRT1);

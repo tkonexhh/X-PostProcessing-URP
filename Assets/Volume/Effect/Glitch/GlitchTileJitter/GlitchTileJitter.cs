@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace XPostProcessing
 {
@@ -25,18 +26,12 @@ namespace XPostProcessing
 
     public class GlitchTileJitterRenderer : VolumeRenderer<GlitchTileJitter>
     {
-        private const string PROFILER_TAG = "GlitchTileJitter";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "GlitchTileJitter";
+        public override string ShaderName => "Hidden/PostProcessing/Glitch/TileJitter";
+
 
         private float randomFrequency;
 
-
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/Glitch/TileJitter");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderIDs
         {
@@ -44,31 +39,23 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
-
-
-            cmd.BeginSample(PROFILER_TAG);
-
             UpdateFrequency(settings);
 
             if (settings.jitterDirection.value == Direction.Horizontal)
             {
-                m_BlitMaterial.EnableKeyword("JITTER_DIRECTION_HORIZONTAL");
+                blitMaterial.EnableKeyword("JITTER_DIRECTION_HORIZONTAL");
             }
             else
             {
-                m_BlitMaterial.DisableKeyword("JITTER_DIRECTION_HORIZONTAL");
+                blitMaterial.DisableKeyword("JITTER_DIRECTION_HORIZONTAL");
             }
 
-            m_BlitMaterial.SetVector(ShaderIDs.Params, new Vector4(settings.splittingNumber.value, settings.amount.value, settings.speed.value * 100f,
+            blitMaterial.SetVector(ShaderIDs.Params, new Vector4(settings.splittingNumber.value, settings.amount.value, settings.speed.value * 100f,
                  settings.intervalType.value == IntervalType.Random ? randomFrequency : settings.frequency.value));
 
-            cmd.Blit(source, target, m_BlitMaterial, settings.splittingDirection.value == Direction.Horizontal ? 0 : 1);
-
-            cmd.EndSample(PROFILER_TAG);
+            cmd.Blit(source, target, blitMaterial, settings.splittingDirection.value == Direction.Horizontal ? 0 : 1);
         }
 
         void UpdateFrequency(GlitchTileJitter settings)
@@ -80,11 +67,11 @@ namespace XPostProcessing
 
             if (settings.intervalType.value == IntervalType.Infinite)
             {
-                m_BlitMaterial.EnableKeyword("USING_FREQUENCY_INFINITE");
+                blitMaterial.EnableKeyword("USING_FREQUENCY_INFINITE");
             }
             else
             {
-                m_BlitMaterial.DisableKeyword("USING_FREQUENCY_INFINITE");
+                blitMaterial.DisableKeyword("USING_FREQUENCY_INFINITE");
             }
         }
     }

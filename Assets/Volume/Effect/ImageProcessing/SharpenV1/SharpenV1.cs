@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace XPostProcessing
 {
@@ -15,18 +16,9 @@ namespace XPostProcessing
 
     public class SharpenV1Renderer : VolumeRenderer<SharpenV1>
     {
-        private const string PROFILER_TAG = "SharpenV1";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "SharpenV1";
+        public override string ShaderName => "Hidden/PostProcessing/ImageProcessing/SharpenV1";
 
-        private float randomFrequency;
-
-
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/ImageProcessing/SharpenV1");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderIDs
         {
@@ -35,20 +27,12 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
+            blitMaterial.SetFloat(ShaderIDs.Strength, settings.Strength.value);
+            blitMaterial.SetFloat(ShaderIDs.Threshold, settings.Threshold.value);
 
-
-            cmd.BeginSample(PROFILER_TAG);
-
-            m_BlitMaterial.SetFloat(ShaderIDs.Strength, settings.Strength.value);
-            m_BlitMaterial.SetFloat(ShaderIDs.Threshold, settings.Threshold.value);
-
-            cmd.Blit(source, target, m_BlitMaterial);
-
-            cmd.EndSample(PROFILER_TAG);
+            cmd.Blit(source, target, blitMaterial);
         }
 
     }

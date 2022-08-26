@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-
 namespace XPostProcessing
 {
     [VolumeComponentMenu(VolumeDefine.Glitch + "RGB颜色分离V5 (RGB SplitV5)")]
@@ -19,19 +18,15 @@ namespace XPostProcessing
 
     public sealed class GlitchRGBSplitV5Renderer : VolumeRenderer<GlitchRGBSplitV5>
     {
-        private const string PROFILER_TAG = "GlitchRGBSplitV5";
-        private Shader shader;
-        private Material m_BlitMaterial;
-        private Texture2D m_NoiseTex;
+        public override string PROFILER_TAG => "GlitchRGBSplitV5";
+        public override string ShaderName => "Hidden/PostProcessing/Glitch/RGBSplitV5";
 
-        private float TimeX = 1.0f;
+        private Texture2D m_NoiseTex;
 
 
         public override void Init()
         {
-            shader = Shader.Find("Hidden/PostProcessing/Glitch/RGBSplitV5");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-
+            base.Init();
             m_NoiseTex = Resources.Load("X-Noise256") as Texture2D;
         }
 
@@ -42,27 +37,15 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
-
-            // if (!settings.IsActive())
-            //     return;
-
-
-            cmd.BeginSample(PROFILER_TAG);
-
-            m_BlitMaterial.SetVector(ShaderIDs.Params, new Vector2(settings.Amplitude.value, settings.Speed.value));
+            blitMaterial.SetVector(ShaderIDs.Params, new Vector2(settings.Amplitude.value, settings.Speed.value));
             if (m_NoiseTex != null)
             {
-                m_BlitMaterial.SetTexture(ShaderIDs.NoiseTex, m_NoiseTex);
+                blitMaterial.SetTexture(ShaderIDs.NoiseTex, m_NoiseTex);
             }
 
-            cmd.Blit(source, target, m_BlitMaterial);
-            // cmd.Blit(target, source);
-
-            cmd.EndSample(PROFILER_TAG);
+            cmd.Blit(source, target, blitMaterial);
         }
     }
 

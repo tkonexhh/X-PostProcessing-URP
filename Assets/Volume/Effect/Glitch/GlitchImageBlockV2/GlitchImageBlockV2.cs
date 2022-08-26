@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace XPostProcessing
 {
@@ -23,18 +24,13 @@ namespace XPostProcessing
 
     public class GlitchImageBlockV2Renderer : VolumeRenderer<GlitchImageBlockV2>
     {
-        private const string PROFILER_TAG = "GlitchImageBlockV3";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "GlitchImageBlockV2";
+        public override string ShaderName => "Hidden/PostProcessing/Glitch/ImageBlockV2";
+
 
         private float TimeX = 1.0f;
 
 
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/Glitch/ImageBlockV2");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderIDs
         {
@@ -43,34 +39,28 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
-
-            cmd.BeginSample(PROFILER_TAG);
-
             TimeX += Time.deltaTime;
             if (TimeX > 100)
             {
                 TimeX = 0;
             }
 
-            m_BlitMaterial.SetVector(ShaderIDs.Params, new Vector3(TimeX * settings.Speed.value, settings.Amount.value, settings.Fade.value));
-            m_BlitMaterial.SetVector(ShaderIDs.Params2, new Vector4(settings.BlockLayer1_U.value, settings.BlockLayer1_V.value, settings.BlockLayer1_Indensity.value, settings.RGBSplitIndensity.value));
+            blitMaterial.SetVector(ShaderIDs.Params, new Vector3(TimeX * settings.Speed.value, settings.Amount.value, settings.Fade.value));
+            blitMaterial.SetVector(ShaderIDs.Params2, new Vector4(settings.BlockLayer1_U.value, settings.BlockLayer1_V.value, settings.BlockLayer1_Indensity.value, settings.RGBSplitIndensity.value));
 
 
             if (settings.BlockVisualizeDebug.value)
             {
                 //debug
-                cmd.Blit(source, target, m_BlitMaterial, 1);
+                cmd.Blit(source, target, blitMaterial, 1);
             }
             else
             {
-                cmd.Blit(source, target, m_BlitMaterial, 0);
+                cmd.Blit(source, target, blitMaterial, 0);
             }
 
-            cmd.EndSample(PROFILER_TAG);
         }
     }
 

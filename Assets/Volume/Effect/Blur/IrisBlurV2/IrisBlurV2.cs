@@ -23,16 +23,16 @@ namespace XPostProcessing
 
     public sealed class IrisBlurV2Renderer : VolumeRenderer<IrisBlurV2>
     {
-        private const string PROFILER_TAG = "IrisBlurV2";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "IrisBlurV2";
+        public override string ShaderName => "Hidden/PostProcessing/Blur/IrisBlurV2";
+
+
 
         private Vector4 mGoldenRot = new Vector4();
 
         public override void Init()
         {
-            shader = Shader.Find("Hidden/PostProcessing/Blur/IrisBlurV2");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
+            base.Init();
 
             // Precompute rotations
             float c = Mathf.Cos(2.39996323f);
@@ -48,20 +48,14 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
+            blitMaterial.SetVector(ShaderIDs.GoldenRot, mGoldenRot);
+            blitMaterial.SetVector(ShaderIDs.Gradient, new Vector3(settings.centerOffsetX.value, settings.centerOffsetY.value, settings.AreaSize.value * 0.1f));
+            blitMaterial.SetVector(ShaderIDs.Params, new Vector4(settings.Iteration.value, settings.BlurRadius.value, 1f / Screen.width, 1f / Screen.height));
 
-            cmd.BeginSample(PROFILER_TAG);
+            cmd.Blit(source, target, blitMaterial, settings.showPreview.value ? 1 : 0);
 
-            m_BlitMaterial.SetVector(ShaderIDs.GoldenRot, mGoldenRot);
-            m_BlitMaterial.SetVector(ShaderIDs.Gradient, new Vector3(settings.centerOffsetX.value, settings.centerOffsetY.value, settings.AreaSize.value * 0.1f));
-            m_BlitMaterial.SetVector(ShaderIDs.Params, new Vector4(settings.Iteration.value, settings.BlurRadius.value, 1f / Screen.width, 1f / Screen.height));
-
-            cmd.Blit(source, target, m_BlitMaterial, settings.showPreview.value ? 1 : 0);
-
-            cmd.EndSample(PROFILER_TAG);
         }
 
 

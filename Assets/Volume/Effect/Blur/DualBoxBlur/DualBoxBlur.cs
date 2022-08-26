@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace XPostProcessing
 {
@@ -16,17 +17,15 @@ namespace XPostProcessing
 
     public class DualBoxBlurRenderer : VolumeRenderer<DualBoxBlur>
     {
-        private const string PROFILER_TAG = "DualBoxBlur";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "DualBoxBlur";
+        public override string ShaderName => "Hidden/PostProcessing/Blur/DualBoxBlur";
 
         Level[] m_Pyramid;
         const int k_MaxPyramidSize = 16;
 
         public override void Init()
         {
-            shader = Shader.Find("Hidden/PostProcessing/Blur/DualBoxBlur");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
+            base.Init();
 
             m_Pyramid = new Level[k_MaxPyramidSize];
 
@@ -52,18 +51,15 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
 
-            cmd.BeginSample(PROFILER_TAG);
 
             int tw = (int)(Screen.width / settings.RTDownScaling.value);
             int th = (int)(Screen.height / settings.RTDownScaling.value);
 
             Vector4 BlurOffset = new Vector4(settings.BlurRadius.value / (float)Screen.width, settings.BlurRadius.value / (float)Screen.height, 0, 0);
-            m_BlitMaterial.SetVector(ShaderIDs.BlurOffset, BlurOffset);
+            blitMaterial.SetVector(ShaderIDs.BlurOffset, BlurOffset);
             // Downsample
             RenderTargetIdentifier lastDown = source;
             for (int i = 0; i < settings.Iteration.value; i++)
@@ -75,7 +71,7 @@ namespace XPostProcessing
 
                 // cmd.GetTemporaryRT(cmd, mipDown, 0, RenderTextureReadWrite.Default, FilterMode.Bilinear, tw, th);
                 // context.GetScreenSpaceTemporaryRT(cmd, mipUp, 0, context.sourceFormat, RenderTextureReadWrite.Default, FilterMode.Bilinear, tw, th);
-                cmd.Blit(lastDown, mipDown, m_BlitMaterial);
+                cmd.Blit(lastDown, mipDown, blitMaterial);
 
                 lastDown = mipDown;
                 tw = Mathf.Max(tw / 2, 1);
@@ -87,13 +83,13 @@ namespace XPostProcessing
             for (int i = settings.Iteration.value - 2; i >= 0; i--)
             {
                 int mipUp = m_Pyramid[i].up;
-                cmd.Blit(lastUp, mipUp, m_BlitMaterial);
+                cmd.Blit(lastUp, mipUp, blitMaterial);
                 lastUp = mipUp;
             }
 
 
             // Render blurred texture in blend pass
-            cmd.Blit(lastUp, target, m_BlitMaterial, 1);
+            cmd.Blit(lastUp, target, blitMaterial, 1);
 
             // Cleanup
             for (int i = 0; i < settings.Iteration.value; i++)
@@ -104,7 +100,6 @@ namespace XPostProcessing
                     cmd.ReleaseTemporaryRT(m_Pyramid[i].up);
             }
 
-            cmd.EndSample(PROFILER_TAG);
         }
     }
 

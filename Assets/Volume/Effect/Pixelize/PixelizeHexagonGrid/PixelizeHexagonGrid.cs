@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace XPostProcessing
 {
@@ -16,16 +17,9 @@ namespace XPostProcessing
 
     public class PixelizeHexagonGridRenderer : VolumeRenderer<PixelizeHexagonGrid>
     {
-        private const string PROFILER_TAG = "PixelizeHexagonGrid";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "PixelizeHexagonGrid";
+        public override string ShaderName => "Hidden/PostProcessing/Pixelate/PixelizeHexagonGrid";
 
-
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/Pixelate/PixelizeHexagonGrid");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderIDs
         {
@@ -33,18 +27,11 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
+            blitMaterial.SetVector(ShaderIDs.Params, new Vector2(settings.pixelSize.value, settings.gridWidth.value));
 
-            cmd.BeginSample(PROFILER_TAG);
-
-            m_BlitMaterial.SetVector(ShaderIDs.Params, new Vector2(settings.pixelSize.value, settings.gridWidth.value));
-
-            cmd.Blit(source, target, m_BlitMaterial);
-
-            cmd.EndSample(PROFILER_TAG);
+            cmd.Blit(source, target, blitMaterial);
         }
     }
 

@@ -4,73 +4,37 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-
 namespace XPostProcessing
 {
     [VolumeComponentMenu(VolumeDefine.Environment + "深度雾 (Depth Fog)")]
     public class DepthFog : VolumeSetting
     {
-        public override bool IsActive() => fogStrength.value > 0;
+        public override bool IsActive() => enable.value;
 
-        [Tooltip("雾浓度")]
-        public ClampedFloatParameter fogStrength = new ClampedFloatParameter(0f, 0.00f, 1f, true);
-        [Tooltip("雾颜色")]
-        public ColorParameter fogColor = new ColorParameter(Color.white);
-
-        [Tooltip("雾变化率")]
-        public ClampedFloatParameter fogHeightScale = new ClampedFloatParameter(10f, 1f, 50f);
-        [Tooltip("雾生效开始距离")]
-        public FloatParameter fogEnableDistance = new FloatParameter(10);
-        [Tooltip("雾生效渐变区域")]
-        public FloatParameter fogEnableDistanceArea = new FloatParameter(20);
-        [Tooltip("雾基础高度,浓度为1的高度")]
-        public FloatParameter fogBaseLevel = new FloatParameter(0);
+        public BoolParameter enable = new BoolParameter(false);
     }
 
 
     public class DepthFogRenderer : VolumeRenderer<DepthFog>
     {
-        private Shader shader;
-        private Material m_BlitMaterial;
-        private const string PROFILER_TAG = "Depth Fog";
 
+        public override string PROFILER_TAG => "Depth Fog";
+        public override string ShaderName => "Hidden/PostProcessing/DepthFog";
 
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/DepthFog");
-
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
+        public static bool IsEnable = true;
 
         static class ShaderContants
         {
-            public static readonly int fogColorID = Shader.PropertyToID("_DepthFogColor");
-            public static readonly int fogParameterID = Shader.PropertyToID("_FogParameter");
-            public static readonly int fogBaseLevelID = Shader.PropertyToID("_FogBaseLevel");
+
         }
 
+        public override bool CheckActive(ref RenderingData renderingData) => IsEnable;
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
-
-            cmd.BeginSample(PROFILER_TAG);
-
-            m_BlitMaterial.SetColor(ShaderContants.fogColorID, settings.fogColor.value);
-            Vector4 fogParam;
-            fogParam.x = settings.fogStrength.value;
-            fogParam.y = settings.fogHeightScale.value;
-            fogParam.z = settings.fogEnableDistance.value;
-            fogParam.w = settings.fogEnableDistanceArea.value;
-            m_BlitMaterial.SetVector(ShaderContants.fogParameterID, fogParam);
-            m_BlitMaterial.SetFloat(ShaderContants.fogBaseLevelID, settings.fogBaseLevel.value);
-            cmd.Blit(source, target, m_BlitMaterial);
-            // cmd.Blit(target, source);
-
-            cmd.EndSample(PROFILER_TAG);
-
+            cmd.Blit(source, target, blitMaterial);
         }
+
 
 
     }

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
-
+using UnityEngine.Rendering.Universal;
 namespace XPostProcessing
 {
     [VolumeComponentMenu(VolumeDefine.Blur + "粒状模糊 (Grainy Blur)")]
@@ -12,22 +12,15 @@ namespace XPostProcessing
         public FloatParameter BlurRadius = new ClampedFloatParameter(0f, 0f, 50f);
         public IntParameter Iteration = new ClampedIntParameter(4, 1, 8);
         public FloatParameter RTDownScaling = new ClampedFloatParameter(1f, 1f, 10f);
+        public FloatParameter BlurRadiusMax = new FloatParameter(5f);
     }
 
     public class GrainyBlurRenderer : VolumeRenderer<GrainyBlur>
     {
-        private const string PROFILER_TAG = "GrainyBlur";
-        private Shader shader;
-        private Material m_BlitMaterial;
 
+        public override string PROFILER_TAG => "GrainyBlur";
+        public override string ShaderName => "Hidden/PostProcessing/Blur/GrainyBlur";
 
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/Blur/GrainyBlur");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-
-
-        }
 
         static class ShaderIDs
         {
@@ -36,12 +29,9 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
 
-            cmd.BeginSample(PROFILER_TAG);
 
             if (settings.RTDownScaling.value > 1)
             {
@@ -52,21 +42,19 @@ namespace XPostProcessing
                 cmd.Blit(source, ShaderIDs.BufferRT);
             }
 
-            m_BlitMaterial.SetVector(ShaderIDs.Params, new Vector2(settings.BlurRadius.value / Screen.height, settings.Iteration.value));
+            blitMaterial.SetVector(ShaderIDs.Params, new Vector2(settings.BlurRadius.value / Screen.height, settings.Iteration.value));
 
             if (settings.RTDownScaling.value > 1)
             {
-                cmd.Blit(ShaderIDs.BufferRT, target, m_BlitMaterial, 0);
+                cmd.Blit(ShaderIDs.BufferRT, target, blitMaterial, 0);
             }
             else
             {
-                cmd.Blit(source, target, m_BlitMaterial, 0);
+                cmd.Blit(source, target, blitMaterial, 0);
             }
 
             // release
             cmd.ReleaseTemporaryRT(ShaderIDs.BufferRT);
-
-            cmd.EndSample(PROFILER_TAG);
         }
     }
 

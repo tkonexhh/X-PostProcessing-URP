@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace XPostProcessing
 {
@@ -18,16 +19,8 @@ namespace XPostProcessing
 
     public class RapidOldTVVignetteV2Renderer : VolumeRenderer<RapidOldTVVignetteV2>
     {
-        private const string PROFILER_TAG = "RapidOldTVVignetteV2";
-        private Shader shader;
-        private Material m_BlitMaterial;
-
-
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/Vignette/RapidOldTVVignetteV2");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
+        public override string PROFILER_TAG => "RapidOldTVVignetteV2";
+        public override string ShaderName => "Hidden/PostProcessing/Vignette/RapidOldTVVignetteV2";
 
         static class ShaderIDs
         {
@@ -37,23 +30,16 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
-
-            cmd.BeginSample(PROFILER_TAG);
-
-            m_BlitMaterial.SetFloat(ShaderIDs.VignetteSize, settings.vignetteSize.value);
-            m_BlitMaterial.SetFloat(ShaderIDs.SizeOffset, settings.sizeOffset.value);
+            blitMaterial.SetFloat(ShaderIDs.VignetteSize, settings.vignetteSize.value);
+            blitMaterial.SetFloat(ShaderIDs.SizeOffset, settings.sizeOffset.value);
             if (settings.vignetteType.value == VignetteType.ColorMode)
             {
-                m_BlitMaterial.SetColor(ShaderIDs.VignetteColor, settings.vignetteColor.value);
+                blitMaterial.SetColor(ShaderIDs.VignetteColor, settings.vignetteColor.value);
             }
 
-            cmd.Blit(source, target, m_BlitMaterial, (int)settings.vignetteType.value);
-
-            cmd.EndSample(PROFILER_TAG);
+            cmd.Blit(source, target, blitMaterial, (int)settings.vignetteType.value);
         }
     }
 

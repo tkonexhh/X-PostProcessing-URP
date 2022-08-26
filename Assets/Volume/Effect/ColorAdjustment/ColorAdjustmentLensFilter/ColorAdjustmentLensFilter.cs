@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace XPostProcessing
 {
@@ -17,15 +18,9 @@ namespace XPostProcessing
 
     public class ColorAdjustmentLensFilterRenderer : VolumeRenderer<ColorAdjustmentLensFilter>
     {
-        private const string PROFILER_TAG = "ColorAdjustmentLensFilter";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "ColorAdjustmentLensFilter";
+        public override string ShaderName => "Hidden/PostProcessing/ColorAdjustment/LensFilter";
 
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/ColorAdjustment/LensFilter");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderIDs
         {
@@ -34,18 +29,12 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
+            blitMaterial.SetFloat(ShaderIDs.Indensity, settings.Indensity.value);
+            blitMaterial.SetColor(ShaderIDs.LensColor, settings.LensColor.value);
 
-            cmd.BeginSample(PROFILER_TAG);
-
-            m_BlitMaterial.SetFloat(ShaderIDs.Indensity, settings.Indensity.value);
-            m_BlitMaterial.SetColor(ShaderIDs.LensColor, settings.LensColor.value);
-
-            cmd.Blit(source, target, m_BlitMaterial);
-            cmd.EndSample(PROFILER_TAG);
+            cmd.Blit(source, target, blitMaterial);
         }
     }
 

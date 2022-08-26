@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-
 namespace XPostProcessing
 {
 
@@ -32,20 +31,16 @@ namespace XPostProcessing
 
     public class GlitchLineBlockRenderer : VolumeRenderer<GlitchLineBlock>
     {
-        private const string PROFILER_TAG = "GlitchLineBlock";
-        private Shader shader;
-        private Material m_BlitMaterial;
+
+        public override string PROFILER_TAG => "GlitchLineBlock";
+        public override string ShaderName => "Hidden/PostProcessing/Glitch/LineBlock";
+
 
         private float TimeX = 1.0f;
         private float randomFrequency;
         private int frameCount = 0;
 
 
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/Glitch/LineBlock");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderIDs
         {
@@ -54,14 +49,8 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
-
-
-            cmd.BeginSample(PROFILER_TAG);
-
             UpdateFrequency(settings);
 
             TimeX += Time.deltaTime;
@@ -70,15 +59,13 @@ namespace XPostProcessing
                 TimeX = 0;
             }
 
-            m_BlitMaterial.SetVector(ShaderIDs.Params, new Vector3(
+            blitMaterial.SetVector(ShaderIDs.Params, new Vector3(
                 settings.intervalType.value == IntervalType.Random ? randomFrequency : settings.frequency.value,
                 TimeX * settings.Speed.value * 0.2f, settings.Amount.value));
 
-            m_BlitMaterial.SetVector(ShaderIDs.Params2, new Vector3(settings.Offset.value, 1 / settings.LinesWidth.value, settings.Alpha.value));
+            blitMaterial.SetVector(ShaderIDs.Params2, new Vector3(settings.Offset.value, 1 / settings.LinesWidth.value, settings.Alpha.value));
 
-            cmd.Blit(source, target, m_BlitMaterial, (int)settings.blockDirection.value);
-
-            cmd.EndSample(PROFILER_TAG);
+            cmd.Blit(source, target, blitMaterial, (int)settings.blockDirection.value);
         }
 
         void UpdateFrequency(GlitchLineBlock settings)
@@ -96,11 +83,11 @@ namespace XPostProcessing
 
             if (settings.intervalType.value == IntervalType.Infinite)
             {
-                m_BlitMaterial.EnableKeyword("USING_FREQUENCY_INFINITE");
+                blitMaterial.EnableKeyword("USING_FREQUENCY_INFINITE");
             }
             else
             {
-                m_BlitMaterial.DisableKeyword("USING_FREQUENCY_INFINITE");
+                blitMaterial.DisableKeyword("USING_FREQUENCY_INFINITE");
             }
         }
     }

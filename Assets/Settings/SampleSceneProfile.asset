@@ -104,6 +104,47 @@ MonoBehaviour:
   gridWidth:
     m_OverrideState: 0
     m_Value: 1
+--- !u!114 &-7815262753256949922
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3aa8aead55611c4281192a27e47f50d, type: 3}
+  m_Name: CutsceneSquares
+  m_EditorClassIdentifier: 
+  active: 1
+  <displayName>k__BackingField: 
+  m_AdvancedMode: 0
+  rate:
+    m_OverrideState: 1
+    m_Value: 0.27
+    min: 0
+    max: 1
+  degree:
+    m_OverrideState: 1
+    m_Value: 44.04
+  color:
+    m_OverrideState: 1
+    m_Value:
+      r: 0.2216981
+      g: 0.60778487
+      b: 1
+      a: 1
+    hdr: 0
+    showAlpha: 1
+    showEyeDropper: 1
+  tilling:
+    m_OverrideState: 1
+    m_Value: 10
+    min: 10
+    max: 60
+  center:
+    m_OverrideState: 1
+    m_Value: {x: 0.5, y: 0.5}
 --- !u!114 &-7418771860841537717
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -116,11 +157,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa92a7d3ec485ea47a51652b0b12f874, type: 3}
   m_Name: EdgeDetectionScharrNeon
   m_EditorClassIdentifier: 
-  active: 0
+  active: 1
   m_AdvancedMode: 0
   EdgeWidth:
     m_OverrideState: 1
-    m_Value: 1.7
+    m_Value: 1.46
   BackgroundFade:
     m_OverrideState: 1
     m_Value: 0.33
@@ -181,13 +222,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e61fba9bd69d53e4faad81811ba803af, type: 3}
   m_Name: DualGaussianBlur
   m_EditorClassIdentifier: 
-  active: 1
+  active: 0
   m_AdvancedMode: 0
   BlurRadius:
     m_OverrideState: 1
     m_Value: 3.6
   Iteration:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 4
   RTDownScaling:
     m_OverrideState: 0
@@ -244,6 +285,7 @@ MonoBehaviour:
   - {fileID: 9023798159867514117}
   - {fileID: -7418771860841537717}
   - {fileID: -5724805935998415109}
+  - {fileID: 7901752632819418102}
 --- !u!114 &849379129802519247
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -312,6 +354,51 @@ MonoBehaviour:
   BlockVisualizeDebug:
     m_OverrideState: 0
     m_Value: 0
+--- !u!114 &7901752632819418102
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15182b4fd93c80545a074dd4e28b98bc, type: 3}
+  m_Name: LightShaft
+  m_EditorClassIdentifier: 
+  active: 1
+  m_AdvancedMode: 0
+  BloomIntensity:
+    m_OverrideState: 0
+    m_Value: 0
+    min: 0
+    max: 5
+  Threshold:
+    m_OverrideState: 0
+    m_Value: 0
+    min: 0
+    max: 1
+  OcclusionDepthRange:
+    m_OverrideState: 0
+    m_Value: 0.1
+    min: 0
+    max: 1
+  BloomTint:
+    m_OverrideState: 0
+    m_Value: {r: 1, g: 1, b: 1, a: 1}
+    hdr: 0
+    showAlpha: 1
+    showEyeDropper: 1
+  DownSample:
+    m_OverrideState: 0
+    m_Value: 1
+    min: 0
+    max: 5
+  Attenuation:
+    m_OverrideState: 0
+    m_Value: 1
+    min: 0
+    max: 10
 --- !u!114 &9023798159867514117
 MonoBehaviour:
   m_ObjectHideFlags: 3

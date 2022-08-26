@@ -1,6 +1,6 @@
 ﻿
 
-Shader "Hidden/PostProcessing/BulletTime"
+Shader "Hidden/PostProcessing/BulletTime2"
 {
     Properties
     {
@@ -21,70 +21,62 @@ Shader "Hidden/PostProcessing/BulletTime"
             Cull Back
             
             HLSLPROGRAM
-            
-            #pragma vertex VertDefault
+
+            #pragma vertex VertWorld
             #pragma fragment frag
 
             #include "../../../Shader/PostProcessing.hlsl"
-                                    
-            CBUFFER_START(UnityPerMaterial)
-            float4 _OriginPos;
-            float _BlurQuality;
-            float _BlurPower;
-            float4 _BulletTimeColor;            
-            CBUFFER_END
-
-            float3 RGBtoHSV(float3 c){
-                float4 K = float4(0.0f,-1.0f/3.0f,2.0f/3.0f,-1.0f);
-                float4 p = lerp(float4(c.bg,K.wz),float4(c.gb,K.xy),step(c.b,c.g));
-                float4 q = lerp(float4(p.xyw,c.r),float4(c.r,p.yzx),step(p.x,c.r));
-                float d = q.x - min(q.w,q.y);
-                float le = 1.0e-10;
-                return float3(abs(q.z + (q.w - q.y)/(6.0 * d + le)),d/(q.x + le),q.x);
-            }
-
-            float3 HSVtoRGB(float3 c){
-                float4 K = float4(1.0,2.0/3.0,1.0/3.0,3.0);
-                float3 p = abs(frac(c.xxx + K.xyz) * 6.0 - K.www);
-                return c.z * lerp(K.xxx,saturate(p - K.xxx),c.y);
-            }
-
-
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             
-            float4 frag(VaryingsDefault input): SV_Target
+            CBUFFER_START(UnityPerMaterial)
+            float4 _BulletTimeOriginPos;
+            //float _BlurQuality;
+            //float _BlurPower;
+            float4 _BulletTimeColor;
+            float _BulletTimeConcen;
+            //float _BulletBloomMaskSize;
+            float _SpotSize;
+            CBUFFER_END
+            //TEXTURE2D(_BulletTimeBloomMask);
+            //SAMPLER(sampler_BulletTimeBloomMask);
+
+            float3 GetWorldPosBYDepth(float2 uv, float3 ray)
             {
-                //half4 var_MainTex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
-                
-                float3 center = float3(0.5,0.5f,0);
+                float sceneRawDepth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, sampler_CameraDepthTexture, uv);
+                float eyeDepth = LinearEyeDepth(sceneRawDepth, _ZBufferParams);
+                float3 worldPos = _WorldSpaceCameraPos.xyz + eyeDepth * ray; //作者：lyh萌主 https: //www.bilibili.com/read/cv14565799/ 出处：bilibili
+                return worldPos;
+            }
+            
+            float4 frag(VaryingsWorld input): SV_Target
+            {
 
-                float2 d = input.uv - center;
-                float2 dir = d * d * d;
+                float3 worldPos = GetWorldPosBYDepth(input.uv, input.interpolatedRay.xyz);
+                float dis = distance(worldPos, _BulletTimeOriginPos.xyz);
+                //float dis = distance(worldPos, float3(1567, 335, 1124));
+                dis = saturate(dis / _SpotSize);
+                //dis = frac(dis * 0.1);
+                //dis = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, sampler_CameraDepthTexture, input.uv);
 
-                float4 outColor = 0;
-                for(int j = 0; j < _BlurQuality; ++j){
-                    float2 uv = input.uv + dir * j * _BlurPower;
-                    outColor += SAMPLE_TEXTURE2D(_MainTex,sampler_MainTex,uv);                    
-                }
+                float4 col = GetScreenColor(input.uv);
+                //屏幕颜色部分
+                float3 btColor = lerp(1, _BulletTimeColor.rgb, _BulletTimeConcen);
 
-                outColor /= _BlurQuality;
-                //outColor.rgb = 1 - outColor.rgb * 4;
+                //bloomMask部分
+                //float2 sUV = (input.uv - float2(0.5, 0.5)) * (1 / (_BulletTimeConcen + 0.01)) / _BulletBloomMaskSize + float2(0.5, 0.5);
+                //sUV = saturate(sUV);
+                //float3 mask = SAMPLE_TEXTURE2D(_BulletTimeBloomMask, sampler_BulletTimeBloomMask, sUV).rgb;
 
-                // float3 hsvColor = RGBtoHSV(outColor.rgb);
-                // hsvColor.x += lerp(0,0.2,sin(PI * frac(_Time.y * 0.5)));
-                // hsvColor.x = frac(hsvColor.x);
-        
-                // outColor.rgb = 1 - HSVtoRGB(hsvColor.rgb) * 8;
-                outColor *= _BulletTimeColor;
-                //float dis =  Length2(center - float3(input.uv,0));
-                
-                //if(dis < _OriginPos.w)
-                //   var_MainTex.rgb = 1 - var_MainTex.rgb * 5;  
-                                            
-                return outColor;
+                float3 bcol = col.rgb * btColor;
+                col.rgb = lerp(col.rgb, bcol, dis);
+                //col.rgb += mask;
+
+                //return float4(dis, dis, dis, 1);
+                return col;
             }
             
             ENDHLSL
-            
+
         }
     }
     FallBack "Diffuse"

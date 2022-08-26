@@ -23,20 +23,13 @@ namespace XPostProcessing
 
     public sealed class GlitchRGBSplitV3Renderer : VolumeRenderer<GlitchRGBSplitV3>
     {
-        private const string PROFILER_TAG = "GlitchRGBSplitV3";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "GlitchRGBSplitV3";
+        public override string ShaderName => "Hidden/PostProcessing/Glitch/RGBSplitV3";
+
 
         private float randomFrequency;
         private int frameCount = 0;
 
-
-
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/Glitch/RGBSplitV3");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderIDs
         {
@@ -44,20 +37,13 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
-
-            cmd.BeginSample(PROFILER_TAG);
-
             UpdateFrequency(settings);
 
-            m_BlitMaterial.SetVector(ShaderIDs.Params, new Vector3(settings.intervalType.value == IntervalType.Random ? randomFrequency : settings.Frequency.value, settings.Amount.value, settings.Speed.value));
+            blitMaterial.SetVector(ShaderIDs.Params, new Vector3(settings.intervalType.value == IntervalType.Random ? randomFrequency : settings.Frequency.value, settings.Amount.value, settings.Speed.value));
 
-            cmd.Blit(source, target, m_BlitMaterial);
-
-            cmd.EndSample(PROFILER_TAG);
+            cmd.Blit(source, target, blitMaterial);
         }
 
         void UpdateFrequency(GlitchRGBSplitV3 settings)
@@ -75,11 +61,11 @@ namespace XPostProcessing
 
             if (settings.intervalType.value == IntervalType.Infinite)
             {
-                m_BlitMaterial.EnableKeyword("USING_Frequency_INFINITE");
+                blitMaterial.EnableKeyword("USING_Frequency_INFINITE");
             }
             else
             {
-                m_BlitMaterial.DisableKeyword("USING_Frequency_INFINITE");
+                blitMaterial.DisableKeyword("USING_Frequency_INFINITE");
             }
         }
     }

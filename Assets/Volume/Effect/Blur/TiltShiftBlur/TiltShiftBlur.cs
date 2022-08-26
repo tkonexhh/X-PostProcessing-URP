@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace XPostProcessing
 {
@@ -28,16 +29,10 @@ namespace XPostProcessing
 
     public class TiltShiftBlurRenderer : VolumeRenderer<TiltShiftBlur>
     {
-        private const string PROFILER_TAG = "TiltShiftBlur";
-        private Shader shader;
-        private Material m_BlitMaterial;
 
+        public override string PROFILER_TAG => "TiltShiftBlur";
+        public override string ShaderName => "Hidden/PostProcessing/Blur/TiltShiftBlur";
 
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/Blur/TiltShiftBlur");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderIDs
         {
@@ -48,12 +43,9 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
 
-            cmd.BeginSample(PROFILER_TAG);
 
             //Get RT
             int RTWidth = (int)(Screen.width / settings.RTDownScaling.value);
@@ -61,19 +53,17 @@ namespace XPostProcessing
             cmd.GetTemporaryRT(ShaderIDs.BufferRT1, RTWidth, RTHeight, 0, FilterMode.Bilinear);
 
             // Set Property
-            m_BlitMaterial.SetVector(ShaderIDs.Params, new Vector2(settings.AreaSize.value, settings.BlurRadius.value));
+            blitMaterial.SetVector(ShaderIDs.Params, new Vector2(settings.AreaSize.value, settings.BlurRadius.value));
 
             // Do Blit
-            cmd.Blit(source, ShaderIDs.BufferRT1, m_BlitMaterial, (int)settings.QualityLevel.value);
+            cmd.Blit(source, ShaderIDs.BufferRT1, blitMaterial, (int)settings.QualityLevel.value);
 
             // Final Blit
             cmd.SetGlobalTexture(ShaderIDs.BlurredTex, ShaderIDs.BufferRT1);
-            cmd.Blit(source, target, m_BlitMaterial, 2);
+            cmd.Blit(source, target, blitMaterial, 2);
 
             // release
             cmd.ReleaseTemporaryRT(ShaderIDs.BufferRT1);
-
-            cmd.EndSample(PROFILER_TAG);
         }
     }
 

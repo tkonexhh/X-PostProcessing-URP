@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace XPostProcessing
 {
@@ -23,16 +24,9 @@ namespace XPostProcessing
 
     public class PixelizeQuadRenderer : VolumeRenderer<PixelizeQuad>
     {
-        private const string PROFILER_TAG = "PixelizeQuad";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "PixelizeQuad";
+        public override string ShaderName => "Hidden/PostProcessing/Pixelate/PixelizeQuad";
 
-
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/Pixelate/PixelizeQuad");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderIDs
         {
@@ -40,15 +34,10 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
-
-            cmd.BeginSample(PROFILER_TAG);
-
             float size = (1.01f - settings.pixelSize.value) * 200f;
-            m_BlitMaterial.SetFloat("_PixelSize", size);
+            blitMaterial.SetFloat("_PixelSize", size);
 
 
             float ratio = settings.pixelRatio.value;
@@ -61,11 +50,9 @@ namespace XPostProcessing
                 }
             }
 
-            m_BlitMaterial.SetVector(ShaderIDs.Params, new Vector4(size, ratio, settings.pixelScaleX.value, settings.pixelScaleY.value));
+            blitMaterial.SetVector(ShaderIDs.Params, new Vector4(size, ratio, settings.pixelScaleX.value, settings.pixelScaleY.value));
 
-            cmd.Blit(source, target, m_BlitMaterial);
-
-            cmd.EndSample(PROFILER_TAG);
+            cmd.Blit(source, target, blitMaterial);
         }
     }
 

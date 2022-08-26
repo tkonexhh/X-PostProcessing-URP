@@ -12,7 +12,6 @@ namespace XPostProcessing
         public class Settings
         {
             public RenderPassEvent RenderPassEvent = RenderPassEvent.AfterRenderingTransparents;
-            [Range(0, 5)] public int downSample = 0;
         }
 
         public Settings settings;
@@ -28,7 +27,6 @@ namespace XPostProcessing
                 var destination = new RenderTargetHandle(renderer.cameraColorTarget);
 
                 m_CustomVolumePass.renderPassEvent = settings.RenderPassEvent;
-                m_CustomVolumePass.downSample = settings.downSample;
                 m_CustomVolumePass.Setup(renderer.cameraColorTarget);
                 renderer.EnqueuePass(m_CustomVolumePass);
             }

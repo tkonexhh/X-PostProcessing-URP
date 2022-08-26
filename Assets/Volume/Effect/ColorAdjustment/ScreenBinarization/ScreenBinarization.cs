@@ -18,34 +18,18 @@ namespace XPostProcessing
 
     public class ScreenBinarizationRenderer : VolumeRenderer<ScreenBinarization>
     {
-        private Shader shader;
-        private Material m_BlitMaterial;
-        private const string PROFILER_TAG = "Screen Binarization";
-
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/ScreenBinarization");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
+        public override string PROFILER_TAG => "Screen Binarization";
+        public override string ShaderName => "Hidden/PostProcessing/ScreenBinarization";
 
         static class ShaderIDs
         {
             public static readonly int BinarizationAmountPID = Shader.PropertyToID("_BinarizationAmount");
         }
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
-
-
-            cmd.BeginSample(PROFILER_TAG);
-
-            m_BlitMaterial.SetFloat(ShaderIDs.BinarizationAmountPID, settings.intensity.value);
-            cmd.Blit(source, target, m_BlitMaterial);
-            // cmd.Blit(target, source);
-
-            cmd.EndSample(PROFILER_TAG);
+            blitMaterial.SetFloat(ShaderIDs.BinarizationAmountPID, settings.intensity.value);
+            cmd.Blit(source, target, blitMaterial);
 
         }
     }

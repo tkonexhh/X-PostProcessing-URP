@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace XPostProcessing
 {
@@ -14,15 +15,10 @@ namespace XPostProcessing
 
     public class ColorAdjustmentContrastV3Renderer : VolumeRenderer<ColorAdjustmentContrastV3>
     {
-        private const string PROFILER_TAG = "ColorAdjustmentContrastV3";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "ColorAdjustmentContrastV3";
+        public override string ShaderName => "Hidden/PostProcessing/ColorAdjustment/ContrastV3";
 
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/ColorAdjustment/ContrastV3");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
+
 
         static class ShaderIDs
         {
@@ -30,17 +26,11 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
+            blitMaterial.SetVector(ShaderIDs.Contrast, settings.contrast.value);
 
-            cmd.BeginSample(PROFILER_TAG);
-
-            m_BlitMaterial.SetVector(ShaderIDs.Contrast, settings.contrast.value);
-
-            cmd.Blit(source, target, m_BlitMaterial);
-            cmd.EndSample(PROFILER_TAG);
+            cmd.Blit(source, target, blitMaterial);
         }
     }
 

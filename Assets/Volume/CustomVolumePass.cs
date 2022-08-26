@@ -8,42 +8,25 @@ using System.Linq;
 
 namespace XPostProcessing
 {
-    public class CustomVolumePass : ScriptableRenderPass
+    public class CustomVolumePass : BaseVolumePass
     {
-
-        const string k_RenderPostProcessingTag = "Custom Render PostProcessing Effects";
-        const string k_RenderFinalPostProcessingTag = "Custom Render Final PostProcessing Pass";
-        private static readonly ProfilingSampler m_ProfilingRenderPostProcessing = new ProfilingSampler(k_RenderPostProcessingTag);
-        private static readonly ProfilingSampler m_ProfilingRenderFinalPostProcessing = new ProfilingSampler(k_RenderFinalPostProcessingTag);
-
-        List<AbstractVolumeRenderer> m_PostProcessingRenderers = new List<AbstractVolumeRenderer>();
-
-        RenderTargetIdentifier m_Source;
-        RenderTargetHandle m_TempRT0;
-        RenderTargetHandle m_TempRT1;
-        RenderTextureDescriptor m_Descriptor;
+        protected override string RenderPostProcessingTag => "Custom Render PostProcessing Effects";
 
 
-        public int downSample;
-
-        public CustomVolumePass()
+        protected override void OnInit()// CustomVolumePass():base()
         {
-            m_TempRT0.Init("_TempRT0");
-            m_TempRT1.Init("_TempRT1");
-
             // var customVolumes = VolumeManager.instance.baseComponentTypeArray
             //     .Where(t => t.IsSubclassOf(typeof(VolumeSetting)))
             //     .Select(t => VolumeManager.instance.stack.GetComponent(t) as VolumeSetting)
             //     .ToList();
             // Debug.LogError("customVolumesL:" + customVolumes.Count);
 
-            // for (int i = 0; i < customVolumes.Count; i++)
-            // {
-            //     AddEffect(customVolumes[i]);
-            // }
-
-            AddEffect(new DepthFogRenderer());
+            //SSAO
+            AddEffect(new SSAORenderer());
+            // AddEffect(new DepthFog2Renderer());
             AddEffect(new CloudShadowRenderer());
+            AddEffect(new LightShaftRenderer());
+            AddEffect(new BloomRenderer());
             //故障
             AddEffect(new GlitchRGBSplitRenderer());
             AddEffect(new GlitchRGBSplitV2Renderer());
@@ -87,9 +70,14 @@ namespace XPostProcessing
             AddEffect(new IrisBlurRenderer());
             AddEffect(new RainRippleRenderer());
 
+
             AddEffect(new SurfaceSnowRenderer());
-            AddEffect(new RaderWaveRenderer());
-            AddEffect(new BulletTimeRenderer());
+
+            AddEffect(new EdageOutlineRenderer());
+
+
+            //鱼眼扭曲
+            AddEffect(new SpaceWarpRenderer());
 
             //Blur
             AddEffect(new GaussianBlurRenderer());
@@ -114,12 +102,15 @@ namespace XPostProcessing
             AddEffect(new SharpenV3Renderer());
 
 
+
             //Vignette
             AddEffect(new RapidOldTVVignetteRenderer());
             AddEffect(new RapidOldTVVignetteV2Renderer());
             AddEffect(new RapidVignetteRenderer());
             AddEffect(new RapidVignetteV2Renderer());
             AddEffect(new AuroraVignetteRenderer());
+
+            AddEffect(new AwakingEyeRenderer());
 
             //色彩调整
             AddEffect(new ColorAdjustmentBleachBypassRenderer());
@@ -135,78 +126,13 @@ namespace XPostProcessing
             AddEffect(new ColorAdjustmentWhiteBalanceRenderer());
             AddEffect(new ColorAdjustmentColorReplaceRenderer());
             AddEffect(new ScreenBinarizationRenderer());
+
+            AddEffect(new ColorAdjustmentTintPlayerPosRenderer());
+
+            AddEffect(new TonemappingRenderer());
         }
 
-        private void AddEffect(AbstractVolumeRenderer renderer)
-        {
-            m_PostProcessingRenderers.Add(renderer);
-            renderer.Init();
-        }
 
-        public void Setup(RenderTargetIdentifier source)
-        {
-            m_Source = source;
-            // m_Destination = destination;
-        }
-
-        public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
-        {
-            RenderTextureDescriptor cameraTargetDescriptor = renderingData.cameraData.cameraTargetDescriptor;
-            m_Descriptor = cameraTargetDescriptor;
-            m_Descriptor.msaaSamples = 1;
-            m_Descriptor.depthBufferBits = 32;
-            m_Descriptor.width = m_Descriptor.width >> downSample;
-            m_Descriptor.height = m_Descriptor.height >> downSample;
-
-
-            cmd.GetTemporaryRT(m_TempRT0.id, m_Descriptor);
-            cmd.GetTemporaryRT(m_TempRT1.id, m_Descriptor);
-
-            ConfigureTarget(m_TempRT0.Identifier());
-            ConfigureClear(ClearFlag.None, Color.white);
-        }
-
-        public override void OnCameraCleanup(CommandBuffer cmd)
-        {
-
-            cmd.ReleaseTemporaryRT(m_TempRT0.id);
-            cmd.ReleaseTemporaryRT(m_TempRT1.id);
-        }
-
-        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
-        {
-            // if (!Application.isPlaying) return;
-
-            var cmd = CommandBufferPool.Get();
-            cmd.Clear();
-
-            // 初始化临时RT
-            RenderTargetIdentifier buff0, buff1;
-            buff0 = m_TempRT0.id;
-            buff1 = m_TempRT1.id;
-            RenderTargetIdentifier GetSource() => buff0;
-            RenderTargetIdentifier GetTarget() => buff1;
-
-            void Swap() => CoreUtils.Swap(ref buff0, ref buff1);
-            using (new ProfilingScope(cmd, m_ProfilingRenderPostProcessing))
-            {
-                Blit(cmd, m_Source, buff0);
-                foreach (var renderer in m_PostProcessingRenderers)
-                {
-                    if (renderer.IsActive())
-                    {
-                        renderer.Render(cmd, GetSource(), GetTarget());
-                        Swap();
-                    }
-                }
-
-                Blit(cmd, buff0, m_Source);
-            }
-
-
-            context.ExecuteCommandBuffer(cmd);
-            CommandBufferPool.Release(cmd);
-        }
 
     }
 }

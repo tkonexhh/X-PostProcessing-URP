@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-
 namespace XPostProcessing
 {
     [VolumeComponentMenu(VolumeDefine.Glitch + "错位图块故障 (Image Block Glitch)")]
@@ -29,18 +28,11 @@ namespace XPostProcessing
 
     public sealed class GlitchImageBlockRenderer : VolumeRenderer<GlitchImageBlock>
     {
-        private const string PROFILER_TAG = "GlitchImageBlock";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "GlitchImageBlock";
+        public override string ShaderName => "Hidden/PostProcessing/Glitch/ImageBlock";
 
         private float TimeX = 1.0f;
 
-
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/Glitch/ImageBlock");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderIDs
         {
@@ -50,40 +42,27 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-
-            if (m_BlitMaterial == null)
-                return;
-
-            // if (!settings.IsActive())
-            //     return;
-
-            cmd.BeginSample(PROFILER_TAG);
-
             TimeX += Time.deltaTime;
             if (TimeX > 100)
             {
                 TimeX = 0;
             }
 
-            m_BlitMaterial.SetVector(ShaderIDs.Params, new Vector3(TimeX * settings.Speed.value, settings.Amount.value, settings.Fade.value));
-            m_BlitMaterial.SetVector(ShaderIDs.Params2, new Vector4(settings.BlockLayer1_U.value, settings.BlockLayer1_V.value, settings.BlockLayer2_U.value, settings.BlockLayer2_V.value));
-            m_BlitMaterial.SetVector(ShaderIDs.Params3, new Vector3(settings.RGBSplitIndensity.value, settings.BlockLayer1_Indensity.value, settings.BlockLayer2_Indensity.value));
+            blitMaterial.SetVector(ShaderIDs.Params, new Vector3(TimeX * settings.Speed.value, settings.Amount.value, settings.Fade.value));
+            blitMaterial.SetVector(ShaderIDs.Params2, new Vector4(settings.BlockLayer1_U.value, settings.BlockLayer1_V.value, settings.BlockLayer2_U.value, settings.BlockLayer2_V.value));
+            blitMaterial.SetVector(ShaderIDs.Params3, new Vector3(settings.RGBSplitIndensity.value, settings.BlockLayer1_Indensity.value, settings.BlockLayer2_Indensity.value));
 
             if (settings.BlockVisualizeDebug.value)
             {
                 //debug
-                cmd.Blit(source, target, m_BlitMaterial, 1);
+                cmd.Blit(source, target, blitMaterial, 1);
             }
             else
             {
-                cmd.Blit(source, target, m_BlitMaterial, 0);
+                cmd.Blit(source, target, blitMaterial, 0);
             }
-
-            // cmd.Blit(target, source);
-
-            cmd.EndSample(PROFILER_TAG);
         }
     }
 

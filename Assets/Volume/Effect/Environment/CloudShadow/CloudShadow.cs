@@ -34,17 +34,8 @@ namespace XPostProcessing
 
     public class CloudShadowRenderer : VolumeRenderer<CloudShadow>
     {
-        private Shader shader;
-        private Material m_BlitMaterial;
-        private const string PROFILER_TAG = "Cloud Shadow";
-
-
-
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/CloudShadow");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
+        public override string PROFILER_TAG => "Cloud Shadow";
+        public override string ShaderName => "Hidden/PostProcessing/CloudShadow";
 
         static class ShaderContants
         {
@@ -57,23 +48,18 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
-
-            cmd.BeginSample(PROFILER_TAG);
-
             if (settings.shadowForLightDirection.value)
             {
-                m_BlitMaterial.SetInt(ShaderContants.cloudShadowModeID, 1);
+                blitMaterial.SetInt(ShaderContants.cloudShadowModeID, 1);
             }
             else
             {
-                m_BlitMaterial.SetInt(ShaderContants.cloudShadowModeID, 0);
+                blitMaterial.SetInt(ShaderContants.cloudShadowModeID, 0);
             }
-            m_BlitMaterial.SetTexture(ShaderContants.cloudTextureID, settings.cloudTexture.value);
-            m_BlitMaterial.SetColor(ShaderContants.cloudShadowColorID, settings.shadowColor.value);
+            blitMaterial.SetTexture(ShaderContants.cloudTextureID, settings.cloudTexture.value);
+            blitMaterial.SetColor(ShaderContants.cloudShadowColorID, settings.shadowColor.value);
             Vector4 cloud;// = new Vector4(m_Settings.cloudScale.x, m_Settings.cloudScale.y,m_Settings.shodowStrength,m_Settings.maxDistance);
 
             cloud.x = settings.cloudScale.value;
@@ -81,19 +67,16 @@ namespace XPostProcessing
             cloud.z = settings.shadowStrength.value;
             cloud.w = settings.maxDistance.value;
 
-            m_BlitMaterial.SetVector(ShaderContants.cloudTilingID, cloud);
+            blitMaterial.SetVector(ShaderContants.cloudTilingID, cloud);
             Vector4 wind;// = new Vector4(m_Settings.windSpeedDirection.x, m_Settings.windSpeedDirection.y, m_Settings.shodowCutoffMin, m_Settings.shodowCutoffMax);
 
             wind.x = settings.windSpeedDirection.value.x;
             wind.y = settings.windSpeedDirection.value.y;
             wind.z = settings.shadowCutoffMin.value;
             wind.w = settings.shadowCutoffMax.value;
-            m_BlitMaterial.SetVector(ShaderContants.windFactorID, wind);
-            m_BlitMaterial.SetInt(ShaderContants.cloudHeightID, settings.cloudHeight.value);
-            cmd.Blit(source, target, m_BlitMaterial);
-            // cmd.Blit(target, source);
-
-            cmd.EndSample(PROFILER_TAG);
+            blitMaterial.SetVector(ShaderContants.windFactorID, wind);
+            blitMaterial.SetInt(ShaderContants.cloudHeightID, settings.cloudHeight.value);
+            cmd.Blit(source, target, blitMaterial);
 
         }
     }

@@ -12,7 +12,7 @@ namespace XPostProcessing
     public abstract class VolumeSetting : VolumeComponent, IPostProcessComponent
     {
         public abstract bool IsActive();
-        public bool IsTileCompatible() => false;
+        public virtual bool IsTileCompatible() => false;
         //面板上打钩是回复到默认值的意思 
         //需要默认就关闭效果 强度为0
     }

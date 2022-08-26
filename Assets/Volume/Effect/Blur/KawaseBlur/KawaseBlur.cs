@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
-
+using UnityEngine.Rendering.Universal;
 namespace XPostProcessing
 {
     [VolumeComponentMenu(VolumeDefine.Blur + "Kawase模糊 (Kawase Blur)")]
@@ -16,16 +16,9 @@ namespace XPostProcessing
 
     public class KawaseBlurRenderer : VolumeRenderer<KawaseBlur>
     {
-        private const string PROFILER_TAG = "KawaseBlur";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "KawaseBlur";
+        public override string ShaderName => "Hidden/PostProcessing/Blur/KawaseBlur";
 
-
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/Blur/KawaseBlur");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderIDs
         {
@@ -35,12 +28,9 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
 
-            cmd.BeginSample(PROFILER_TAG);
 
             int RTWidth = (int)(Screen.width / settings.RTDownScaling.value);
             int RTHeight = (int)(Screen.height / settings.RTDownScaling.value);
@@ -54,19 +44,17 @@ namespace XPostProcessing
             bool needSwitch = true;
             for (int i = 0; i < settings.Iteration.value; i++)
             {
-                m_BlitMaterial.SetFloat(ShaderIDs.BlurRadius, i / settings.RTDownScaling.value + settings.BlurRadius.value);
-                cmd.Blit(needSwitch ? ShaderIDs.BufferRT1 : ShaderIDs.BufferRT2, needSwitch ? ShaderIDs.BufferRT2 : ShaderIDs.BufferRT1, m_BlitMaterial);
+                blitMaterial.SetFloat(ShaderIDs.BlurRadius, i / settings.RTDownScaling.value + settings.BlurRadius.value);
+                cmd.Blit(needSwitch ? ShaderIDs.BufferRT1 : ShaderIDs.BufferRT2, needSwitch ? ShaderIDs.BufferRT2 : ShaderIDs.BufferRT1, blitMaterial);
                 needSwitch = !needSwitch;
             }
 
-            m_BlitMaterial.SetFloat(ShaderIDs.BlurRadius, settings.Iteration.value / settings.RTDownScaling.value + settings.BlurRadius.value);
-            cmd.Blit(needSwitch ? ShaderIDs.BufferRT1 : ShaderIDs.BufferRT2, target, m_BlitMaterial);
+            blitMaterial.SetFloat(ShaderIDs.BlurRadius, settings.Iteration.value / settings.RTDownScaling.value + settings.BlurRadius.value);
+            cmd.Blit(needSwitch ? ShaderIDs.BufferRT1 : ShaderIDs.BufferRT2, target, blitMaterial);
 
             // release
             cmd.ReleaseTemporaryRT(ShaderIDs.BufferRT1);
             cmd.ReleaseTemporaryRT(ShaderIDs.BufferRT2);
-
-            cmd.EndSample(PROFILER_TAG);
         }
     }
 

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
-
+using UnityEngine.Rendering.Universal;
 namespace XPostProcessing
 {
     [VolumeComponentMenu(VolumeDefine.Vignette + "老式TV渐晕 (RapidOldTVVignette)")]
@@ -19,16 +19,9 @@ namespace XPostProcessing
 
     public class RapidOldTVVignetteRenderer : VolumeRenderer<RapidOldTVVignette>
     {
-        private const string PROFILER_TAG = "RapidOldTVVignette";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "RapidOldTVVignette";
+        public override string ShaderName => "Hidden/PostProcessing/Vignette/RapidOldTVVignette";
 
-
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/Vignette/RapidOldTVVignette");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderIDs
         {
@@ -38,24 +31,17 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
-
-            cmd.BeginSample(PROFILER_TAG);
-
-            m_BlitMaterial.SetFloat(ShaderIDs.VignetteIndensity, settings.vignetteIndensity.value);
-            m_BlitMaterial.SetVector(ShaderIDs.VignetteCenter, settings.vignetteCenter.value);
+            blitMaterial.SetFloat(ShaderIDs.VignetteIndensity, settings.vignetteIndensity.value);
+            blitMaterial.SetVector(ShaderIDs.VignetteCenter, settings.vignetteCenter.value);
 
             if (settings.vignetteType.value == VignetteType.ColorMode)
             {
-                m_BlitMaterial.SetVector(ShaderIDs.VignetteColor, settings.vignetteColor.value);
+                blitMaterial.SetVector(ShaderIDs.VignetteColor, settings.vignetteColor.value);
             }
 
-            cmd.Blit(source, target, m_BlitMaterial, (int)settings.vignetteType.value);
-
-            cmd.EndSample(PROFILER_TAG);
+            cmd.Blit(source, target, blitMaterial, (int)settings.vignetteType.value);
         }
     }
 

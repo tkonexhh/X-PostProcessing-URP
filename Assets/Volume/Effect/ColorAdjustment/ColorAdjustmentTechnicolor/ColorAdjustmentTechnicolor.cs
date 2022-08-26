@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace XPostProcessing
 {
@@ -19,15 +20,9 @@ namespace XPostProcessing
 
     public class ColorAdjustmentTechnicolorRenderer : VolumeRenderer<ColorAdjustmentTechnicolor>
     {
-        private const string PROFILER_TAG = "ColorAdjustmentTechnicolor";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "ColorAdjustmentTechnicolor";
+        public override string ShaderName => "Hidden/PostProcessing/ColorAdjustment/Technicolor";
 
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/ColorAdjustment/Technicolor");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderIDs
         {
@@ -37,19 +32,14 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
+            blitMaterial.SetFloat(ShaderIDs.exposure, 8f - settings.exposure.value);
+            blitMaterial.SetVector(ShaderIDs.colorBalance, Vector3.one - new Vector3(settings.colorBalanceR.value, settings.colorBalanceG.value, settings.colorBalanceB.value));
+            blitMaterial.SetFloat(ShaderIDs.indensity, settings.indensity.value);
 
-            cmd.BeginSample(PROFILER_TAG);
+            cmd.Blit(source, target, blitMaterial);
 
-            m_BlitMaterial.SetFloat(ShaderIDs.exposure, 8f - settings.exposure.value);
-            m_BlitMaterial.SetVector(ShaderIDs.colorBalance, Vector3.one - new Vector3(settings.colorBalanceR.value, settings.colorBalanceG.value, settings.colorBalanceB.value));
-            m_BlitMaterial.SetFloat(ShaderIDs.indensity, settings.indensity.value);
-
-            cmd.Blit(source, target, m_BlitMaterial);
-            cmd.EndSample(PROFILER_TAG);
         }
     }
 

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
-
+using UnityEngine.Rendering.Universal;
 namespace XPostProcessing
 {
     [VolumeComponentMenu(VolumeDefine.Blur + "方向模糊 (Directional Blur)")]
@@ -18,16 +18,10 @@ namespace XPostProcessing
 
     public class DirectionalBlurRenderer : VolumeRenderer<DirectionalBlur>
     {
-        private const string PROFILER_TAG = "DirectionalBlur";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "DirectionalBlur";
+        public override string ShaderName => "Hidden/PostProcessing/Blur/DirectionalBlur";
 
 
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/Blur/DirectionalBlur");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderIDs
         {
@@ -36,12 +30,9 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
 
-            cmd.BeginSample(PROFILER_TAG);
 
             if (settings.RTDownScaling.value > 1)
             {
@@ -54,19 +45,17 @@ namespace XPostProcessing
 
             float sinVal = (Mathf.Sin(settings.Angle.value) * settings.BlurRadius.value * 0.05f) / settings.Iteration.value;
             float cosVal = (Mathf.Cos(settings.Angle.value) * settings.BlurRadius.value * 0.05f) / settings.Iteration.value;
-            m_BlitMaterial.SetVector(ShaderIDs.Params, new Vector3(settings.Iteration.value, sinVal, cosVal));
+            blitMaterial.SetVector(ShaderIDs.Params, new Vector3(settings.Iteration.value, sinVal, cosVal));
 
             if (settings.RTDownScaling.value > 1)
             {
-                cmd.Blit(ShaderIDs.BufferRT, target, m_BlitMaterial, 0);
+                cmd.Blit(ShaderIDs.BufferRT, target, blitMaterial, 0);
             }
             else
             {
-                cmd.Blit(source, target, m_BlitMaterial, 0);
+                cmd.Blit(source, target, blitMaterial, 0);
             }
 
-
-            cmd.EndSample(PROFILER_TAG);
         }
     }
 

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace XPostProcessing
 {
@@ -19,18 +20,12 @@ namespace XPostProcessing
 
     public class GlitchScanLineJitterRenderer : VolumeRenderer<GlitchScanLineJitter>
     {
-        private const string PROFILER_TAG = "GlitchScanLineJitter";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "GlitchScanLineJitter";
+        public override string ShaderName => "Hidden/PostProcessing/Glitch/ScanLineJitter";
+
 
         private float randomFrequency;
 
-
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/Glitch/ScanLineJitter");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderIDs
         {
@@ -39,17 +34,8 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
-
-            // if (!settings.IsActive())
-            //     return;
-
-
-            cmd.BeginSample(PROFILER_TAG);
-
             UpdateFrequency(settings);
 
             float displacement = 0.005f + Mathf.Pow(settings.JitterIndensity.value, 3) * 0.1f;
@@ -57,12 +43,9 @@ namespace XPostProcessing
 
             //sheet.properties.SetVector(ShaderIDs.Params, new Vector3(settings.amount, settings.speed, );
 
-            m_BlitMaterial.SetVector(ShaderIDs.Params, new Vector3(displacement, threshold, settings.intervalType.value == IntervalType.Random ? randomFrequency : settings.frequency.value));
+            blitMaterial.SetVector(ShaderIDs.Params, new Vector3(displacement, threshold, settings.intervalType.value == IntervalType.Random ? randomFrequency : settings.frequency.value));
 
-            cmd.Blit(source, target, m_BlitMaterial, (int)settings.JitterDirection.value);
-            // cmd.Blit(target, source);
-
-            cmd.EndSample(PROFILER_TAG);
+            cmd.Blit(source, target, blitMaterial, (int)settings.JitterDirection.value);
         }
 
         void UpdateFrequency(GlitchScanLineJitter settings)
@@ -74,11 +57,11 @@ namespace XPostProcessing
 
             if (settings.intervalType.value == IntervalType.Infinite)
             {
-                m_BlitMaterial.EnableKeyword("USING_FREQUENCY_INFINITE");
+                blitMaterial.EnableKeyword("USING_FREQUENCY_INFINITE");
             }
             else
             {
-                m_BlitMaterial.DisableKeyword("USING_FREQUENCY_INFINITE");
+                blitMaterial.DisableKeyword("USING_FREQUENCY_INFINITE");
             }
         }
     }

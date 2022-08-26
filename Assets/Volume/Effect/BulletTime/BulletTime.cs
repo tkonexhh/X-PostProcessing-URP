@@ -2,88 +2,74 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace XPostProcessing
 {
-    [VolumeComponentMenu(VolumeDefine.Extra + "子弹时间 (Bullet Time)")]
+    [VolumeComponentMenu(VolumeDefine.VOLUMEROOT + "子弹时间 (Bullet Time)")]
     public class BulletTime : VolumeSetting
     {
-        public override bool IsActive() => bulletTimeEnable.value;
-        [Tooltip("启用特效")]
-        public BoolParameter bulletTimeEnable = new BoolParameter(false);
+        public override bool IsActive() => bulletTimeConcenration.value > 0;
+
         [Tooltip("持续时间")]
         public MinFloatParameter bulletTimesTime = new MinFloatParameter(5f, 0f);
-        [Tooltip("扩散速度")]
-        public MinFloatParameter bulletTimesBloomSpeed = new MinFloatParameter(1, 0);
-        [Tooltip("径向模糊强度")]
-        public ClampedFloatParameter bulletTimeRadialBlurPower = new ClampedFloatParameter(0.05f, 0f, 0.5f);
-        [Tooltip("径向模糊质量")]
-        public ClampedIntParameter bulletTimeRadialBlurQuality = new ClampedIntParameter(5, 0, 10);
+        //[Tooltip("光晕遮罩")]
+        //public TextureParameter bulletTimeBloomMask = new TextureParameter(null);
+        //[Tooltip("遮罩最大尺寸")]
+        //public FloatParameter bulletTimeMaskMaxSize = new FloatParameter(4);
+        [Tooltip("光亮范围")]
+        public FloatParameter bulletSpotSize = new FloatParameter(3.5f);
+
         [Tooltip("过滤颜色")]
-        public ColorParameter bulletTimeColor = new ColorParameter(Color.white);
-        public bool m_TimeReset;
+        public ColorParameter bulletTimeScreenColor = new ColorParameter(Color.blue);
+
+        [Tooltip("特效开始阶段时长")]
+        public MinFloatParameter startStepTime = new MinFloatParameter(0.5f, 0);
+        [Tooltip("特效结束阶段时长")]
+        public MinFloatParameter endStepTime = new MinFloatParameter(0.5f, 0);
+
+        [Tooltip("特效曲线线")]
+        public ClampedFloatParameter bulletTimeConcenration = new ClampedFloatParameter(0, 0, 1);
+
+        public Vector3Parameter originPos = new Vector3Parameter(Vector3.one, true);
 
     }
 
     public class BulletTimeRenderer : VolumeRenderer<BulletTime>
     {
-        private Shader shader;
-        private Material m_BliteMaterial;
-        private float timeCount = 0;
-        private const string PROFILER_TAG = "Bullet Time";
+        public override string PROFILER_TAG => "Bullet Time";
+        public override string ShaderName => "Hidden/PostProcessing/BulletTime2";
 
-        public override bool IsActive()
-        {
-            if (settings.m_TimeReset)
-            {
-                timeCount = 0;
-                settings.m_TimeReset = false;
-            }
 
-            if (timeCount > settings.bulletTimesTime.value)
-            {
-                return false;
-            }
-            else
-            {
-                timeCount += Time.deltaTime;
-            }
-            //if(timeCount >= settings.bulletTimesTime.value)return false;
-            return base.IsActive();
-        }
-
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/BulletTime");
-            m_BliteMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderContants
         {
-            public static readonly int bulletTimeOriginPositionID = Shader.PropertyToID("_OriginPos");
-            public static readonly int bulletTimeBlurQualityID = Shader.PropertyToID("_BlurQuality");
-            public static readonly int bulletTimeBlurPowerID = Shader.PropertyToID("_BlurPower");
-            public static readonly int bulletTimeBlurCurveID = Shader.PropertyToID("_BulletTimeColor");
+            public static readonly int bulletTimeOriginPositionID = Shader.PropertyToID("_BulletTimeOriginPos");
+            public static readonly int bulletTimeScreenColorID = Shader.PropertyToID("_BulletTimeColor");
+            public static readonly int bulletTimeConcemtrationID = Shader.PropertyToID("_BulletTimeConcen");
+            public static readonly int bulletTimeSpotSizeID = Shader.PropertyToID("_SpotSize");
+            //public static readonly int bulletTimeBloomMaskID = Shader.PropertyToID("_BulletTimeBloomMask");
+            //public static readonly int bulletTimeBloomMaskSizeID = Shader.PropertyToID("_BulletBloomMaskSize");
         }
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BliteMaterial == null) return;
 
 
+            //settings.bulletTimeConcenration.value = 0.98f;
+            //m_BliteMaterial.SetTexture(ShaderContants.bulletTimeBloomMaskID, settings.bulletTimeBloomMask.value);
+            //m_BliteMaterial.SetFloat(ShaderContants.bulletTimeBloomMaskSizeID, settings.bulletTimeMaskMaxSize.value);
+            blitMaterial.SetVector(ShaderContants.bulletTimeOriginPositionID, settings.originPos.value);
+            blitMaterial.SetFloat(ShaderContants.bulletTimeConcemtrationID, settings.bulletTimeConcenration.value);
+            blitMaterial.SetVector(ShaderContants.bulletTimeScreenColorID, settings.bulletTimeScreenColor.value);
+            //Debugger.LogError(settings.bulletSpotSize.value);
+            blitMaterial.SetFloat(ShaderContants.bulletTimeSpotSizeID, settings.bulletSpotSize.value);
+            //Debugger.LogError(m_BlitMaterial.GetFloat(ShaderContants.bulletTimeSpotSizeID));
 
-            cmd.BeginSample(PROFILER_TAG);
-
-            Vector4 vec = Vector4.zero;
-            vec.w = timeCount * settings.bulletTimesBloomSpeed.value;
-            m_BliteMaterial.SetVector(ShaderContants.bulletTimeOriginPositionID, vec);
-            m_BliteMaterial.SetFloat(ShaderContants.bulletTimeBlurPowerID, settings.bulletTimeRadialBlurPower.value);
-            m_BliteMaterial.SetInt(ShaderContants.bulletTimeBlurQualityID, settings.bulletTimeRadialBlurQuality.value);
-            m_BliteMaterial.SetVector(ShaderContants.bulletTimeBlurCurveID, settings.bulletTimeColor.value);
-
-            cmd.Blit(source, target, m_BliteMaterial);
-            cmd.EndSample(PROFILER_TAG);
+            cmd.Blit(source, target, blitMaterial);
         }
+
+
     }
 
 }

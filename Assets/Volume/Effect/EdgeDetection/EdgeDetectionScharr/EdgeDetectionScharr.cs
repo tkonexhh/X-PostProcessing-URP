@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace XPostProcessing
 {
@@ -28,17 +29,9 @@ namespace XPostProcessing
 
     public class EdgeDetectionScharrRenderer : VolumeRenderer<EdgeDetectionScharr>
     {
-        private const string PROFILER_TAG = "EdgeDetectionScharr";
-        private Shader shader;
-        private Material m_BlitMaterial;
+        public override string PROFILER_TAG => "EdgeDetectionScharr";
+        public override string ShaderName => "Hidden/PostProcessing/EdgeDetection/Scharr";
 
-
-
-        public override void Init()
-        {
-            shader = Shader.Find("Hidden/PostProcessing/EdgeDetection/Scharr");
-            m_BlitMaterial = CoreUtils.CreateEngineMaterial(shader);
-        }
 
         static class ShaderIDs
         {
@@ -48,20 +41,13 @@ namespace XPostProcessing
         }
 
 
-        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target)
+        public override void Render(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, ref RenderingData renderingData)
         {
-            if (m_BlitMaterial == null)
-                return;
+            blitMaterial.SetVector(ShaderIDs.Params, new Vector2(settings.edgeWidth.value, settings.backgroundFade.value));
+            blitMaterial.SetColor(ShaderIDs.EdgeColor, settings.edgeColor.value);
+            blitMaterial.SetColor(ShaderIDs.BackgroundColor, settings.backgroundColor.value);
 
-            cmd.BeginSample(PROFILER_TAG);
-
-            m_BlitMaterial.SetVector(ShaderIDs.Params, new Vector2(settings.edgeWidth.value, settings.backgroundFade.value));
-            m_BlitMaterial.SetColor(ShaderIDs.EdgeColor, settings.edgeColor.value);
-            m_BlitMaterial.SetColor(ShaderIDs.BackgroundColor, settings.backgroundColor.value);
-
-            cmd.Blit(source, target, m_BlitMaterial);
-
-            cmd.EndSample(PROFILER_TAG);
+            cmd.Blit(source, target, blitMaterial);
         }
     }
 
