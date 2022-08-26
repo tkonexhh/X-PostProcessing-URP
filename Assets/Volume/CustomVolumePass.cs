@@ -129,6 +129,8 @@ namespace XPostProcessing
 
             AddEffect(new ColorAdjustmentTintPlayerPosRenderer());
 
+            AddEffect(new BlackWhiteRenderer());
+
             AddEffect(new TonemappingRenderer());
         }
 

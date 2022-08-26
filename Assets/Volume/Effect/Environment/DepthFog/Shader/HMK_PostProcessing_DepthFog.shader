@@ -24,7 +24,7 @@ Shader "Hidden/PostProcessing/DepthFog"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-            #include "./../../../../../../../Shader/URP/HLSLIncludes/Common/Fog.hlsl"
+            #include "Fog.hlsl"
 
 
             TEXTURE2D_X_FLOAT(_CameraDepthTexture); SAMPLER(sampler_CameraDepthTexture);

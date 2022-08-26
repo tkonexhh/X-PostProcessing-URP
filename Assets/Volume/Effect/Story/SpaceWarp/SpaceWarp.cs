@@ -20,8 +20,6 @@ namespace XPostProcessing
     }
 
 
-
-
     public class SpaceWarpRenderer : VolumeRenderer<SpaceWarp>
     {
         public override string ShaderName => "Hidden/PostProcessing/SpaceWarp";
