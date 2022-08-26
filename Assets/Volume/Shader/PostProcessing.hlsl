@@ -96,9 +96,5 @@ float rand(float2 n)
     return frac(sin(dot(n, float2(12.9898, 78.233))) * 43758.5453);
 }
 
-half luminance(half3 color)
-{
-    return dot(color, half3(0.222, 0.707, 0.071));
-}
 
 

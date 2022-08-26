@@ -27,6 +27,13 @@ Shader "Hidden/PostProcessing/Skill/BlackWhite"
     #define NoiseSpeed _Params2.z
     #define ChangeRate _Params2.w
 
+    half luminance(half3 color)
+    {
+        return dot(color, half3(0.222, 0.707, 0.071));
+    }
+
+
+
     half4 Frag(VaryingsDefault input): SV_Target
     {
         half grey = luminance(GetScreenColor(input.uv).rgb);
